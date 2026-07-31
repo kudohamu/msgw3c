@@ -55,3 +55,83 @@ pub trait Blend: Sized {
     |backdrop, src| -> Self { Self::from_rgba(0., 0., 0., 1.) }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[derive(Debug)]
+  pub struct Rgba {
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub a: f32,
+  }
+
+  impl Blend for Rgba {
+    fn non_premultiplied_rgba(&self) -> (f32, f32, f32, f32) {
+      (self.r, self.g, self.b, self.a)
+    }
+
+    fn from_rgba(r: f32, g: f32, b: f32, a: f32) -> Self {
+      Self { r, g, b, a }
+    }
+  }
+
+  fn assert_rgba(actual: Rgba, expected: Rgba) {
+    let eps = 1e-4;
+
+    assert!(
+      (actual.r - expected.r).abs() < eps
+        && (actual.g - expected.g).abs() < eps
+        && (actual.b - expected.b).abs() < eps
+        && (actual.a - expected.a).abs() < eps,
+      "expected: {:?}, actual: {:?}",
+      expected,
+      actual
+    );
+  }
+
+  #[test]
+  fn test_transparent_over_transparent() {
+    let bg = Rgba::from_rgba(1.0, 0.0, 0.0, 0.0);
+    let fg = Rgba::from_rgba(0.0, 0.0, 1.0, 0.0);
+
+    assert_rgba(fg.normal(&bg), Rgba::from_rgba(0.0, 0.0, 0.0, 0.0));
+  }
+
+  #[test]
+  fn test_normal_opaque_over_opaque() {
+    let bg = Rgba::from_rgba(1.0, 0.0, 0.0, 1.0);
+    let fg = Rgba::from_rgba(0.0, 0.0, 1.0, 1.0);
+
+    assert_rgba(fg.normal(&bg), Rgba::from_rgba(0.0, 0.0, 1.0, 1.0));
+  }
+
+  #[test]
+  fn test_normal_transparent_over_opaque() {
+    let bg = Rgba::from_rgba(1.0, 0.0, 0.0, 1.0);
+    let fg = Rgba::from_rgba(0.0, 0.0, 1.0, 0.0);
+
+    assert_rgba(fg.normal(&bg), Rgba::from_rgba(1.0, 0.0, 0.0, 1.0));
+  }
+
+  #[test]
+  fn test_normal_semi_transparent_over_opaque() {
+    let bg = Rgba::from_rgba(1.0, 0.0, 0.0, 1.0);
+    let fg = Rgba::from_rgba(0.0, 0.0, 1.0, 0.5);
+
+    assert_rgba(fg.normal(&bg), Rgba::from_rgba(0.5, 0.0, 0.5, 1.0));
+  }
+
+  #[test]
+  fn test_normal_semi_transparent_over_semi_transparent() {
+    let bg = Rgba::from_rgba(1.0, 0.0, 0.0, 0.5);
+    let fg = Rgba::from_rgba(0.0, 1.0, 0.0, 0.5);
+
+    assert_rgba(
+      fg.normal(&bg),
+      Rgba::from_rgba(0.33333334, 0.6666667, 0.0, 0.75),
+    );
+  }
+}
