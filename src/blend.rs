@@ -3,6 +3,12 @@ use crate::{
   porter_duff::{CompositeOperator, PorterDuff},
 };
 
+/// Blend modes defined in the following W3C specification.
+/// https://drafts.csswg.org/compositing-1/#blending
+pub enum BlendMode {
+  Normal,
+}
+
 /// A trait that represents blendable types.
 /// Implementing this trait enables blending
 /// that complies with the W3C specification.
@@ -13,12 +19,19 @@ pub trait Blend: Sized {
   /// The utility function for `normal` blend. It is composited using `SourceOver`.
   /// Use `normal_with`, if you want to blend specifying the Porter-Duff composite operator.
   fn normal(&self, backdrop: &impl Blend) -> Self {
-    Self::composite_separable(|_cb, cs| cs, PorterDuff::SourceOver)(backdrop, self)
+    self.normal_with(backdrop, PorterDuff::SourceOver)
   }
 
   /// `normal` blend function that allows color blending using the Porter-Duff composite operator.
   fn normal_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
-    Self::composite_separable(|_cb, cs| cs, op)(backdrop, self)
+    self.blend_with(backdrop, BlendMode::Normal, op)
+  }
+
+  /// Blend function that allows you to dynamically specify blend mode and composite operator.
+  fn blend_with(&self, backgrop: &impl Blend, mode: BlendMode, op: PorterDuff) -> Self {
+    match mode {
+      BlendMode::Normal => Self::composite_separable(|_cb, cs| cs, op)(backgrop, self),
+    }
   }
 
   /// General composite function for each component of the result color is completely determined by
