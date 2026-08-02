@@ -1,3 +1,13 @@
+/// the Trait that returns a combination of factors for controlling the blending results
+/// of the four subpixel regions formed by the overlap of graphic objects
+/// with alpha channels or pixel coverage channels/values.
+pub trait CompositeOperator {
+  /// Returns a combination of factors for controlling the blending results
+  /// of the four subpixel regions formed by the overlap of graphic objects
+  /// with alpha channels or pixel coverage channels/values.
+  fn fractions(&self, cs_a: f32, cb_a: f32) -> (f32, f32);
+}
+
 /// The Porter-Duff Compositing Operators.
 /// There are 12 basic Porter Duff operators, satisfying all possible combinations of source and destination.
 /// https://drafts.csswg.org/compositing-1/#porterduffcompositingoperators
@@ -19,10 +29,10 @@ pub enum PorterDuff {
   Lighter,
 }
 
-impl PorterDuff {
+impl CompositeOperator for PorterDuff {
   /// Returns the fractional terms Fa and Fb which defined for each operator and
   /// specify the fraction of the shapes that contribute to the final pixel value.
-  pub fn fractions(&self, cs_a: f32, cb_a: f32) -> (f32, f32) {
+  fn fractions(&self, cs_a: f32, cb_a: f32) -> (f32, f32) {
     match self {
       Self::Clear => (0., 0.),
       Self::Copy => (1., 0.),

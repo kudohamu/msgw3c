@@ -1,4 +1,7 @@
-use crate::color::C;
+use crate::{
+  color::C,
+  porter_duff::{CompositeOperator, PorterDuff},
+};
 
 /// A trait that represents blendable types.
 /// Implementing this trait enables blending
@@ -8,11 +11,18 @@ pub trait Blend: Sized {
   fn to_color(&self) -> C;
 
   fn normal(&self, backdrop: &impl Blend) -> Self {
-    Self::composite_separable(|_cb, cs| cs)(backdrop, self)
+    Self::composite_separable(|_cb, cs| cs, PorterDuff::SourceOver)(backdrop, self)
+  }
+
+  fn normal_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    Self::composite_separable(|_cb, cs| cs, op)(backdrop, self)
   }
 
   /// https://drafts.csswg.org/compositing-1/#blendingseparable
-  fn composite_separable<B: Blend, F>(f: F) -> impl Fn(&B, &Self) -> Self
+  fn composite_separable<B: Blend, F, Op: CompositeOperator>(
+    f: F,
+    op: Op,
+  ) -> impl Fn(&B, &Self) -> Self
   where
     F: Fn(f32, f32) -> f32,
   {
@@ -32,11 +42,12 @@ pub trait Blend: Sized {
 
       // Composite: Co = αs x Fa x Cs + αb x Fb x Cb
       // https://drafts.csswg.org/compositing-1/#porterduffcompositingoperators
-      let pm_r = cs.a * 1. * blended_r + cb.a * (1. - cs.a) * cb.r;
-      let pm_g = cs.a * 1. * blended_g + cb.a * (1. - cs.a) * cb.g;
-      let pm_b = cs.a * 1. * blended_b + cb.a * (1. - cs.a) * cb.b;
+      let (fa, fb) = op.fractions(cs.a, cb.a);
+      let pm_r = cs.a * fa * blended_r + cb.a * fb * cb.r;
+      let pm_g = cs.a * fa * blended_g + cb.a * fb * cb.g;
+      let pm_b = cs.a * fa * blended_b + cb.a * fb * cb.b;
       // αo = αs x Fa + αb x Fb
-      let a0 = cs.a * 1. + cb.a * (1. - cs.a);
+      let a0 = cs.a * fa + cb.a * fb;
 
       if a0 == 0. {
         return Self::from_color(C::ZERO);
@@ -51,7 +62,10 @@ pub trait Blend: Sized {
   }
 
   /// https://drafts.csswg.org/compositing-1/#blendingnonseparable
-  fn composite_non_separable<B: Blend, F>(f: F) -> impl Fn(&B, &Self) -> Self
+  fn composite_non_separable<B: Blend, F, Op: CompositeOperator>(
+    f: F,
+    op: Op,
+  ) -> impl Fn(&B, &Self) -> Self
   where
     F: Fn((f32, f32, f32), (f32, f32, f32)) -> (f32, f32, f32),
   {
@@ -72,11 +86,12 @@ pub trait Blend: Sized {
 
       // Composite: Co = αs x Fa x Cs + αb x Fb x Cb
       // https://drafts.csswg.org/compositing-1/#porterduffcompositingoperators
-      let pm_r = cs.a * 1. * blended_r + cb.a * (1. - cs.a) * cb.r;
-      let pm_g = cs.a * 1. * blended_g + cb.a * (1. - cs.a) * cb.g;
-      let pm_b = cs.a * 1. * blended_b + cb.a * (1. - cs.a) * cb.b;
+      let (fa, fb) = op.fractions(cs.a, cb.a);
+      let pm_r = cs.a * fa * blended_r + cb.a * fb * cb.r;
+      let pm_g = cs.a * fa * blended_g + cb.a * fb * cb.g;
+      let pm_b = cs.a * fa * blended_b + cb.a * fb * cb.b;
       // αo = αs x Fa + αb x Fb
-      let a0 = cs.a * 1. + cb.a * (1. - cs.a);
+      let a0 = cs.a * fa + cb.a * fb;
 
       if a0 == 0. {
         return Self::from_color(C::ZERO);
