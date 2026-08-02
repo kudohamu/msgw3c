@@ -1,3 +1,5 @@
+/// Represents simple color type of RGBA format.
+/// NOTE: RGB values MUST be `non-premultiplied` values.
 pub struct C {
   pub r: f32,
   pub g: f32,
