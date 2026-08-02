@@ -10,14 +10,19 @@ pub trait Blend: Sized {
   fn from_color(c: C) -> Self;
   fn to_color(&self) -> C;
 
+  /// The utility function for `normal` blend. It is composited using `SourceOver`.
+  /// Use `normal_with`, if you want to blend specifying the Porter-Duff composite operator.
   fn normal(&self, backdrop: &impl Blend) -> Self {
     Self::composite_separable(|_cb, cs| cs, PorterDuff::SourceOver)(backdrop, self)
   }
 
+  /// `normal` blend function that allows color blending using the Porter-Duff composite operator.
   fn normal_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     Self::composite_separable(|_cb, cs| cs, op)(backdrop, self)
   }
 
+  /// General composite function for each component of the result color is completely determined by
+  /// the corresponding components of the constituent backdrop and source colors.
   /// https://drafts.csswg.org/compositing-1/#blendingseparable
   fn composite_separable<B: Blend, F, Op: CompositeOperator>(
     f: F,
@@ -61,6 +66,7 @@ pub trait Blend: Sized {
     }
   }
 
+  /// General composite function for all color components in combination.
   /// https://drafts.csswg.org/compositing-1/#blendingnonseparable
   fn composite_non_separable<B: Blend, F, Op: CompositeOperator>(
     f: F,
