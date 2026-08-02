@@ -1,10 +1,11 @@
+use crate::color::C;
+
 /// A trait that represents blendable types.
 /// Implementing this trait enables blending
 /// that complies with the W3C specification.
 pub trait Blend: Sized {
-  fn non_premultiplied_rgba(&self) -> (f32, f32, f32, f32);
-
-  fn from_rgba(r: f32, g: f32, b: f32, a: f32) -> Self;
+  fn from_color(c: C) -> Self;
+  fn to_color(&self) -> C;
 
   fn normal(&self, backdrop: &impl Blend) -> Self {
     Self::composite_separable(|_cb, cs| cs)(backdrop, self)
@@ -16,36 +17,36 @@ pub trait Blend: Sized {
     F: Fn(f32, f32) -> f32,
   {
     move |backdrop, src| -> Self {
-      let (back_r, back_g, back_b, back_a) = backdrop.non_premultiplied_rgba();
-      let (src_r, src_g, src_b, src_a) = src.non_premultiplied_rgba();
+      let cb = backdrop.to_color();
+      let cs = src.to_color();
 
-      if src_a == 0. && back_a == 0. {
-        return Self::from_rgba(0., 0., 0., 0.);
+      if cs.a == 0. && cb.a == 0. {
+        return Self::from_color(C::ZERO);
       }
 
       // Blending: Cr = (1 - αb) x Cs + αb x B(Cb, Cs)
       // https://drafts.csswg.org/compositing-1/#blending
-      let blended_r = (1. - back_a) * src_r + back_a * f(back_r, src_r);
-      let blended_g = (1. - back_a) * src_g + back_a * f(back_g, src_g);
-      let blended_b = (1. - back_a) * src_b + back_a * f(back_b, src_b);
+      let blended_r = (1. - cb.a) * cs.r + cb.a * f(cb.r, cs.r);
+      let blended_g = (1. - cb.a) * cs.g + cb.a * f(cb.g, cs.g);
+      let blended_b = (1. - cb.a) * cs.b + cb.a * f(cb.b, cs.b);
 
       // Composite: Co = αs x Fa x Cs + αb x Fb x Cb
       // https://drafts.csswg.org/compositing-1/#porterduffcompositingoperators
-      let pm_r = src_a * 1. * blended_r + back_a * (1. - src_a) * back_r;
-      let pm_g = src_a * 1. * blended_g + back_a * (1. - src_a) * back_g;
-      let pm_b = src_a * 1. * blended_b + back_a * (1. - src_a) * back_b;
+      let pm_r = cs.a * 1. * blended_r + cb.a * (1. - cs.a) * cb.r;
+      let pm_g = cs.a * 1. * blended_g + cb.a * (1. - cs.a) * cb.g;
+      let pm_b = cs.a * 1. * blended_b + cb.a * (1. - cs.a) * cb.b;
       // αo = αs x Fa + αb x Fb
-      let a0 = src_a * 1. + back_a * (1. - src_a);
+      let a0 = cs.a * 1. + cb.a * (1. - cs.a);
 
       if a0 == 0. {
-        return Self::from_rgba(0., 0., 0., 0.);
+        return Self::from_color(C::ZERO);
       }
 
       let r = (pm_r / a0).clamp(0.0, 1.0);
       let g = (pm_g / a0).clamp(0.0, 1.0);
       let b = (pm_b / a0).clamp(0.0, 1.0);
 
-      Self::from_rgba(r, g, b, a0)
+      Self::from_color(C::new(r, g, b, a0))
     }
   }
 
@@ -55,37 +56,37 @@ pub trait Blend: Sized {
     F: Fn((f32, f32, f32), (f32, f32, f32)) -> (f32, f32, f32),
   {
     move |backdrop, src| -> Self {
-      let (back_r, back_g, back_b, back_a) = backdrop.non_premultiplied_rgba();
-      let (src_r, src_g, src_b, src_a) = src.non_premultiplied_rgba();
+      let cb = backdrop.to_color();
+      let cs = src.to_color();
 
-      if src_a == 0. && back_a == 0. {
-        return Self::from_rgba(0., 0., 0., 0.);
+      if cs.a == 0. && cb.a == 0. {
+        return Self::from_color(C::ZERO);
       }
 
       // Blending: Cr = (1 - αb) x Cs + αb x B(Cb, Cs)
       // https://drafts.csswg.org/compositing-1/#blending
-      let (b_r, b_g, b_b) = f((back_r, back_g, back_b), (src_r, src_g, src_b));
-      let blended_r = (1. - back_a) * src_r + back_a * b_r;
-      let blended_g = (1. - back_a) * src_g + back_a * b_g;
-      let blended_b = (1. - back_a) * src_b + back_a * b_b;
+      let (b_r, b_g, b_b) = f((cb.r, cb.g, cb.b), (cs.r, cs.g, cs.b));
+      let blended_r = (1. - cb.a) * cs.r + cb.a * b_r;
+      let blended_g = (1. - cb.a) * cs.g + cb.a * b_g;
+      let blended_b = (1. - cb.a) * cs.b + cb.a * b_b;
 
       // Composite: Co = αs x Fa x Cs + αb x Fb x Cb
       // https://drafts.csswg.org/compositing-1/#porterduffcompositingoperators
-      let pm_r = src_a * 1. * blended_r + back_a * (1. - src_a) * back_r;
-      let pm_g = src_a * 1. * blended_g + back_a * (1. - src_a) * back_g;
-      let pm_b = src_a * 1. * blended_b + back_a * (1. - src_a) * back_b;
+      let pm_r = cs.a * 1. * blended_r + cb.a * (1. - cs.a) * cb.r;
+      let pm_g = cs.a * 1. * blended_g + cb.a * (1. - cs.a) * cb.g;
+      let pm_b = cs.a * 1. * blended_b + cb.a * (1. - cs.a) * cb.b;
       // αo = αs x Fa + αb x Fb
-      let a0 = src_a * 1. + back_a * (1. - src_a);
+      let a0 = cs.a * 1. + cb.a * (1. - cs.a);
 
       if a0 == 0. {
-        return Self::from_rgba(0., 0., 0., 0.);
+        return Self::from_color(C::ZERO);
       }
 
       let r = (pm_r / a0).clamp(0.0, 1.0);
       let g = (pm_g / a0).clamp(0.0, 1.0);
       let b = (pm_b / a0).clamp(0.0, 1.0);
 
-      Self::from_rgba(r, g, b, a0)
+      Self::from_color(C::new(r, g, b, a0))
     }
   }
 }
@@ -102,13 +103,24 @@ mod tests {
     pub a: f32,
   }
 
+  impl Rgba {
+    fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
+      Self { r, g, b, a }
+    }
+  }
+
   impl Blend for Rgba {
-    fn non_premultiplied_rgba(&self) -> (f32, f32, f32, f32) {
-      (self.r, self.g, self.b, self.a)
+    fn from_color(c: C) -> Self {
+      Rgba {
+        r: c.r,
+        g: c.g,
+        b: c.b,
+        a: c.a,
+      }
     }
 
-    fn from_rgba(r: f32, g: f32, b: f32, a: f32) -> Self {
-      Self { r, g, b, a }
+    fn to_color(&self) -> C {
+      C::new(self.r, self.g, self.b, self.a)
     }
   }
 
@@ -128,44 +140,41 @@ mod tests {
 
   #[test]
   fn test_transparent_over_transparent() {
-    let bg = Rgba::from_rgba(1.0, 0.0, 0.0, 0.0);
-    let fg = Rgba::from_rgba(0.0, 0.0, 1.0, 0.0);
+    let bg = Rgba::new(1.0, 0.0, 0.0, 0.0);
+    let fg = Rgba::new(0.0, 0.0, 1.0, 0.0);
 
-    assert_rgba(fg.normal(&bg), Rgba::from_rgba(0.0, 0.0, 0.0, 0.0));
+    assert_rgba(fg.normal(&bg), Rgba::new(0.0, 0.0, 0.0, 0.0));
   }
 
   #[test]
   fn test_normal_opaque_over_opaque() {
-    let bg = Rgba::from_rgba(1.0, 0.0, 0.0, 1.0);
-    let fg = Rgba::from_rgba(0.0, 0.0, 1.0, 1.0);
+    let bg = Rgba::new(1.0, 0.0, 0.0, 1.0);
+    let fg = Rgba::new(0.0, 0.0, 1.0, 1.0);
 
-    assert_rgba(fg.normal(&bg), Rgba::from_rgba(0.0, 0.0, 1.0, 1.0));
+    assert_rgba(fg.normal(&bg), Rgba::new(0.0, 0.0, 1.0, 1.0));
   }
 
   #[test]
   fn test_normal_transparent_over_opaque() {
-    let bg = Rgba::from_rgba(1.0, 0.0, 0.0, 1.0);
-    let fg = Rgba::from_rgba(0.0, 0.0, 1.0, 0.0);
+    let bg = Rgba::new(1.0, 0.0, 0.0, 1.0);
+    let fg = Rgba::new(0.0, 0.0, 1.0, 0.0);
 
-    assert_rgba(fg.normal(&bg), Rgba::from_rgba(1.0, 0.0, 0.0, 1.0));
+    assert_rgba(fg.normal(&bg), Rgba::new(1.0, 0.0, 0.0, 1.0));
   }
 
   #[test]
   fn test_normal_semi_transparent_over_opaque() {
-    let bg = Rgba::from_rgba(1.0, 0.0, 0.0, 1.0);
-    let fg = Rgba::from_rgba(0.0, 0.0, 1.0, 0.5);
+    let bg = Rgba::new(1.0, 0.0, 0.0, 1.0);
+    let fg = Rgba::new(0.0, 0.0, 1.0, 0.5);
 
-    assert_rgba(fg.normal(&bg), Rgba::from_rgba(0.5, 0.0, 0.5, 1.0));
+    assert_rgba(fg.normal(&bg), Rgba::new(0.5, 0.0, 0.5, 1.0));
   }
 
   #[test]
   fn test_normal_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::from_rgba(1.0, 0.0, 0.0, 0.5);
-    let fg = Rgba::from_rgba(0.0, 1.0, 0.0, 0.5);
+    let bg = Rgba::new(1.0, 0.0, 0.0, 0.5);
+    let fg = Rgba::new(0.0, 1.0, 0.0, 0.5);
 
-    assert_rgba(
-      fg.normal(&bg),
-      Rgba::from_rgba(0.33333334, 0.6666667, 0.0, 0.75),
-    );
+    assert_rgba(fg.normal(&bg), Rgba::new(0.33333334, 0.6666667, 0.0, 0.75));
   }
 }
