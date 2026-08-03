@@ -21,6 +21,10 @@ pub enum BlendMode {
   SoftLight,
   Difference,
   Exclusion,
+  Hue,
+  Saturation,
+  Color,
+  Luminosity,
 }
 
 /// A trait that represents blendable types.
@@ -162,6 +166,50 @@ pub trait Blend: Sized {
     self.blend_with(backdrop, BlendMode::Exclusion, op)
   }
 
+  /// The utility function for `hue` blend. It is composited using `SourceOver`.
+  /// Use `hue_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn hue(&self, backdrop: &impl Blend) -> Self {
+    self.hue_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `hue` blend function that allows color blending using the Porter-Duff composite operator.
+  fn hue_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::Hue, op)
+  }
+
+  /// The utility function for `saturation` blend. It is composited using `SourceOver`.
+  /// Use `saturation_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn saturation(&self, backdrop: &impl Blend) -> Self {
+    self.saturation_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `saturation` blend function that allows color blending using the Porter-Duff composite operator.
+  fn saturation_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::Saturation, op)
+  }
+
+  /// The utility function for `color` blend. It is composited using `SourceOver`.
+  /// Use `color`, if you want to blend specifying the Porter-Duff composite operator.
+  fn color(&self, backdrop: &impl Blend) -> Self {
+    self.color_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `color` blend function that allows color blending using the Porter-Duff composite operator.
+  fn color_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::Color, op)
+  }
+
+  /// The utility function for `luminosity` blend. It is composited using `SourceOver`.
+  /// Use `luminosity_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn luminosity(&self, backdrop: &impl Blend) -> Self {
+    self.luminosity_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `luminosity` blend function that allows color blending using the Porter-Duff composite operator.
+  fn luminosity_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::Luminosity, op)
+  }
+
   /// Blend function that allows you to dynamically specify blend mode and composite operator.
   fn blend_with(&self, backdrop: &impl Blend, mode: BlendMode, op: PorterDuff) -> Self {
     match mode {
@@ -177,6 +225,14 @@ pub trait Blend: Sized {
       BlendMode::SoftLight => Self::composite_separable(formula::soft_light, op)(backdrop, self),
       BlendMode::Difference => Self::composite_separable(formula::difference, op)(backdrop, self),
       BlendMode::Exclusion => Self::composite_separable(formula::exclusion, op)(backdrop, self),
+      BlendMode::Hue => Self::composite_non_separable(formula::hue, op)(backdrop, self),
+      BlendMode::Saturation => {
+        Self::composite_non_separable(formula::saturation, op)(backdrop, self)
+      }
+      BlendMode::Color => Self::composite_non_separable(formula::color, op)(backdrop, self),
+      BlendMode::Luminosity => {
+        Self::composite_non_separable(formula::luminosity, op)(backdrop, self)
+      }
     }
   }
 

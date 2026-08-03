@@ -214,3 +214,29 @@ pub(crate) fn difference(cb: f32, cs: f32) -> f32 {
 pub(crate) fn exclusion(cb: f32, cs: f32) -> f32 {
   cb + cs - 2. * cb * cs
 }
+
+/// B(Cb, Cs) = SetLum(SetSat(Cs, Sat(Cb)), Lum(Cb))
+#[inline]
+pub(crate) fn hue(cb: (f32, f32, f32), cs: (f32, f32, f32)) -> (f32, f32, f32) {
+  let (r, g, b) = set_sat(cs.0, cs.1, cs.2, sat(cb.0, cb.1, cb.2));
+  set_lum(r, g, b, lum(cb.0, cb.1, cb.2))
+}
+
+/// B(Cb, Cs) = SetLum(SetSat(Cb, Sat(Cs)), Lum(Cb))
+#[inline]
+pub(crate) fn saturation(cb: (f32, f32, f32), cs: (f32, f32, f32)) -> (f32, f32, f32) {
+  let (r, g, b) = set_sat(cb.0, cb.1, cb.2, sat(cs.0, cs.1, cs.2));
+  set_lum(r, g, b, lum(cb.0, cb.1, cb.2))
+}
+
+/// B(Cb, Cs) = SetLum(Cs, Lum(Cb))
+#[inline]
+pub(crate) fn color(cb: (f32, f32, f32), cs: (f32, f32, f32)) -> (f32, f32, f32) {
+  set_lum(cs.0, cs.1, cs.2, lum(cb.0, cb.1, cb.2))
+}
+
+/// B(Cb, Cs) = SetLum(Cb, Lum(Cs))
+#[inline]
+pub(crate) fn luminosity(cb: (f32, f32, f32), cs: (f32, f32, f32)) -> (f32, f32, f32) {
+  set_lum(cb.0, cb.1, cb.2, lum(cs.0, cs.1, cs.2))
+}
