@@ -1,12 +1,26 @@
 use crate::{
   color::C,
+  formula,
   porter_duff::{CompositeOperator, PorterDuff},
 };
 
 /// Blend modes defined in the following W3C specification.
 /// https://drafts.csswg.org/compositing-1/#blending
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum BlendMode {
+  #[default]
   Normal,
+  Multiply,
+  Screen,
+  Overlay,
+  Darken,
+  Lighten,
+  ColorDodge,
+  ColorBurn,
+  HardLight,
+  SoftLight,
+  Difference,
+  Exclusion,
 }
 
 /// A trait that represents blendable types.
@@ -27,10 +41,142 @@ pub trait Blend: Sized {
     self.blend_with(backdrop, BlendMode::Normal, op)
   }
 
+  /// The utility function for `multiply` blend. It is composited using `SourceOver`.
+  /// Use `multiply_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn multiply(&self, backdrop: &impl Blend) -> Self {
+    self.multiply_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `multiply` blend function that allows color blending using the Porter-Duff composite operator.
+  fn multiply_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::Multiply, op)
+  }
+
+  /// The utility function for `screen` blend. It is composited using `SourceOver`.
+  /// Use `screen_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn screen(&self, backdrop: &impl Blend) -> Self {
+    self.screen_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `screen` blend function that allows color blending using the Porter-Duff composite operator.
+  fn screen_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::Screen, op)
+  }
+
+  /// The utility function for `overlay` blend. It is composited using `SourceOver`.
+  /// Use `overlay_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn overlay(&self, backdrop: &impl Blend) -> Self {
+    self.overlay_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `overlay` blend function that allows color blending using the Porter-Duff composite operator.
+  fn overlay_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::Overlay, op)
+  }
+
+  /// The utility function for `darken` blend. It is composited using `SourceOver`.
+  /// Use `darken_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn darken(&self, backdrop: &impl Blend) -> Self {
+    self.darken_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `darken` blend function that allows color blending using the Porter-Duff composite operator.
+  fn darken_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::Darken, op)
+  }
+
+  /// The utility function for `lighten` blend. It is composited using `SourceOver`.
+  /// Use `lighten_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn lighten(&self, backdrop: &impl Blend) -> Self {
+    self.lighten_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `lighten` blend function that allows color blending using the Porter-Duff composite operator.
+  fn lighten_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::Lighten, op)
+  }
+
+  /// The utility function for `color_dodge` blend. It is composited using `SourceOver`.
+  /// Use `color_dodge_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn color_dodge(&self, backdrop: &impl Blend) -> Self {
+    self.lighten_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `color_dodge` blend function that allows color blending using the Porter-Duff composite operator.
+  fn color_dodge_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::ColorDodge, op)
+  }
+
+  /// The utility function for `color_burn` blend. It is composited using `SourceOver`.
+  /// Use `color_burn_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn color_burn(&self, backdrop: &impl Blend) -> Self {
+    self.lighten_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `color_burn` blend function that allows color blending using the Porter-Duff composite operator.
+  fn color_burn_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::ColorBurn, op)
+  }
+
+  /// The utility function for `hard_light` blend. It is composited using `SourceOver`.
+  /// Use `hard_light_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn hard_light(&self, backdrop: &impl Blend) -> Self {
+    self.lighten_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `hard_light` blend function that allows color blending using the Porter-Duff composite operator.
+  fn hard_light_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::HardLight, op)
+  }
+
+  /// The utility function for `soft_light` blend. It is composited using `SourceOver`.
+  /// Use `soft_light_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn soft_light(&self, backdrop: &impl Blend) -> Self {
+    self.lighten_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `soft_light` blend function that allows color blending using the Porter-Duff composite operator.
+  fn soft_light_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::SoftLight, op)
+  }
+
+  /// The utility function for `difference` blend. It is composited using `SourceOver`.
+  /// Use `difference_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn difference(&self, backdrop: &impl Blend) -> Self {
+    self.lighten_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `difference` blend function that allows color blending using the Porter-Duff composite operator.
+  fn difference_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::Difference, op)
+  }
+
+  /// The utility function for `exclusion` blend. It is composited using `SourceOver`.
+  /// Use `exclusion_with`, if you want to blend specifying the Porter-Duff composite operator.
+  fn exclusion(&self, backdrop: &impl Blend) -> Self {
+    self.lighten_with(backdrop, PorterDuff::SourceOver)
+  }
+
+  /// `exclusion` blend function that allows color blending using the Porter-Duff composite operator.
+  fn exclusion_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
+    self.blend_with(backdrop, BlendMode::Exclusion, op)
+  }
+
   /// Blend function that allows you to dynamically specify blend mode and composite operator.
-  fn blend_with(&self, backgrop: &impl Blend, mode: BlendMode, op: PorterDuff) -> Self {
+  fn blend_with(&self, backdrop: &impl Blend, mode: BlendMode, op: PorterDuff) -> Self {
     match mode {
-      BlendMode::Normal => Self::composite_separable(|_cb, cs| cs, op)(backgrop, self),
+      BlendMode::Normal => Self::composite_separable(formula::normal, op)(backdrop, self),
+      BlendMode::Multiply => Self::composite_separable(formula::multiply, op)(backdrop, self),
+      BlendMode::Screen => Self::composite_separable(formula::screen, op)(backdrop, self),
+      BlendMode::Overlay => Self::composite_separable(formula::overlay, op)(backdrop, self),
+      BlendMode::Darken => Self::composite_separable(formula::darken, op)(backdrop, self),
+      BlendMode::Lighten => Self::composite_separable(formula::lighten, op)(backdrop, self),
+      BlendMode::ColorDodge => Self::composite_separable(formula::color_dodge, op)(backdrop, self),
+      BlendMode::ColorBurn => Self::composite_separable(formula::color_burn, op)(backdrop, self),
+      BlendMode::HardLight => Self::composite_separable(formula::hard_light, op)(backdrop, self),
+      BlendMode::SoftLight => Self::composite_separable(formula::soft_light, op)(backdrop, self),
+      BlendMode::Difference => Self::composite_separable(formula::difference, op)(backdrop, self),
+      BlendMode::Exclusion => Self::composite_separable(formula::exclusion, op)(backdrop, self),
     }
   }
 
