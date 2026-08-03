@@ -19,7 +19,7 @@ pub(crate) fn lum(r: f32, g: f32, b: f32) -> f32 {
 pub(crate) fn clip_color(r: f32, g: f32, b: f32) -> (f32, f32, f32) {
   let l = lum(r, g, b);
   let n = r.min(g).min(b);
-  let x = r.max(g).min(b);
+  let x = r.max(g).max(b);
 
   if n < 0. {
     let c_r = l + (((r - l) * l) / (l - n));
