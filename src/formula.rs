@@ -80,7 +80,7 @@ pub(crate) fn set_sat(r: f32, g: f32, b: f32, s: f32) -> (f32, f32, f32) {
   let mid_index = arr[1].1;
   let max_index = arr[2].1;
 
-  if rgb[min_index] > rgb[min_index] {
+  if rgb[max_index] > rgb[min_index] {
     rgb[mid_index] = ((rgb[mid_index] - rgb[min_index]) * s) / (rgb[max_index] - rgb[min_index]);
     rgb[max_index] = s;
   } else {
