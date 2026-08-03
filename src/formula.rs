@@ -51,7 +51,7 @@ pub(crate) fn set_lum(r: f32, g: f32, b: f32, l: f32) -> (f32, f32, f32) {
   let d = l - lum(r, g, b);
   let c_r = r + d;
   let c_g = g + d;
-  let c_b = g + d;
+  let c_b = b + d;
 
   clip_color(c_r, c_g, c_b)
 }
