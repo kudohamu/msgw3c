@@ -103,7 +103,7 @@ pub trait Blend: Sized {
   /// The utility function for `color_dodge` blend. It is composited using `SourceOver`.
   /// Use `color_dodge_with`, if you want to blend specifying the Porter-Duff composite operator.
   fn color_dodge(&self, backdrop: &impl Blend) -> Self {
-    self.lighten_with(backdrop, PorterDuff::SourceOver)
+    self.color_dodge_with(backdrop, PorterDuff::SourceOver)
   }
 
   /// `color_dodge` blend function that allows color blending using the Porter-Duff composite operator.
@@ -114,7 +114,7 @@ pub trait Blend: Sized {
   /// The utility function for `color_burn` blend. It is composited using `SourceOver`.
   /// Use `color_burn_with`, if you want to blend specifying the Porter-Duff composite operator.
   fn color_burn(&self, backdrop: &impl Blend) -> Self {
-    self.lighten_with(backdrop, PorterDuff::SourceOver)
+    self.color_burn_with(backdrop, PorterDuff::SourceOver)
   }
 
   /// `color_burn` blend function that allows color blending using the Porter-Duff composite operator.
@@ -125,7 +125,7 @@ pub trait Blend: Sized {
   /// The utility function for `hard_light` blend. It is composited using `SourceOver`.
   /// Use `hard_light_with`, if you want to blend specifying the Porter-Duff composite operator.
   fn hard_light(&self, backdrop: &impl Blend) -> Self {
-    self.lighten_with(backdrop, PorterDuff::SourceOver)
+    self.hard_light_with(backdrop, PorterDuff::SourceOver)
   }
 
   /// `hard_light` blend function that allows color blending using the Porter-Duff composite operator.
@@ -136,7 +136,7 @@ pub trait Blend: Sized {
   /// The utility function for `soft_light` blend. It is composited using `SourceOver`.
   /// Use `soft_light_with`, if you want to blend specifying the Porter-Duff composite operator.
   fn soft_light(&self, backdrop: &impl Blend) -> Self {
-    self.lighten_with(backdrop, PorterDuff::SourceOver)
+    self.soft_light_with(backdrop, PorterDuff::SourceOver)
   }
 
   /// `soft_light` blend function that allows color blending using the Porter-Duff composite operator.
@@ -147,7 +147,7 @@ pub trait Blend: Sized {
   /// The utility function for `difference` blend. It is composited using `SourceOver`.
   /// Use `difference_with`, if you want to blend specifying the Porter-Duff composite operator.
   fn difference(&self, backdrop: &impl Blend) -> Self {
-    self.lighten_with(backdrop, PorterDuff::SourceOver)
+    self.difference_with(backdrop, PorterDuff::SourceOver)
   }
 
   /// `difference` blend function that allows color blending using the Porter-Duff composite operator.
@@ -158,7 +158,7 @@ pub trait Blend: Sized {
   /// The utility function for `exclusion` blend. It is composited using `SourceOver`.
   /// Use `exclusion_with`, if you want to blend specifying the Porter-Duff composite operator.
   fn exclusion(&self, backdrop: &impl Blend) -> Self {
-    self.lighten_with(backdrop, PorterDuff::SourceOver)
+    self.exclusion_with(backdrop, PorterDuff::SourceOver)
   }
 
   /// `exclusion` blend function that allows color blending using the Porter-Duff composite operator.
