@@ -10,7 +10,7 @@ pub trait CompositeOperator {
 
 /// The Porter-Duff Compositing Operators.
 /// There are 12 basic Porter Duff operators, satisfying all possible combinations of source and destination.
-/// https://drafts.csswg.org/compositing-1/#porterduffcompositingoperators
+/// <https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators>
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum PorterDuff {
   Clear,

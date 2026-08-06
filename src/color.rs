@@ -1,5 +1,7 @@
 /// Represents simple color type of RGBA format.
 /// NOTE: RGB values MUST be `non-premultiplied` values.
+/// Each value ranges from 0 to 1.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct C {
   pub r: f32,
   pub g: f32,
