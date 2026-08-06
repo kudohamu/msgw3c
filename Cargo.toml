@@ -2,3 +2,9 @@
 name = "msgw3c"
 version = "0.1.0"
 edition = "2024"
+authors = ["kudohamu"]
+description = "A crate provides color blending functionality based on the W3C's specification"
+repository = "https://github.com/kudohamu/msgw3c"
+license = "MIT OR Apache-2.0"
+keywords = ["color", "blending", "compositing", "w3c"]
+categories = ["graphics"]
