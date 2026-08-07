@@ -1,5 +1,5 @@
 /// Represents simple color type of RGBA format.
-/// NOTE: RGB values MUST be `non-premultiplied` values.
+/// NOTE: RGB channels MUST be `premultiplied` values.
 /// Each value ranges from 0 to 1.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct C {
@@ -10,7 +10,7 @@ pub struct C {
 }
 
 impl C {
-  pub const ZERO: Self = Self {
+  pub const TRANSPARENT: Self = Self {
     r: 0.0,
     g: 0.0,
     b: 0.0,
@@ -19,5 +19,21 @@ impl C {
 
   pub fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
     C { r, g, b, a }
+  }
+
+  pub fn from_straight_alpha(r: f32, g: f32, b: f32, a: f32) -> Self {
+    Self::new(r * a, g * a, b * a, a)
+  }
+
+  pub fn to_straight_alpha(&self) -> Self {
+    if self.a == 0. {
+      return C::TRANSPARENT;
+    }
+
+    let r = (self.r / self.a).clamp(0., 1.);
+    let g = (self.g / self.a).clamp(0., 1.);
+    let b = (self.b / self.a).clamp(0., 1.);
+
+    return C::new(r, g, b, self.a);
   }
 }

@@ -93,40 +93,56 @@ pub(crate) fn set_sat(r: f32, g: f32, b: f32, s: f32) -> (f32, f32, f32) {
 }
 
 /// B(Cb, Cs) = Cs
+/// K = αs x αb x B(cb / αb, cs / αs)
+///   = αs x αb x cs / αs
+///   = αb x cs
 #[inline]
-pub(crate) fn normal(_cb: f32, cs: f32) -> f32 {
-  cs
+pub(crate) fn normal(_cb: f32, cs: f32, a_b: f32, _a_s: f32) -> f32 {
+  a_b * cs
 }
 
 /// B(Cb, Cs) = Cb x Cs
+/// K = αs x αb x B(cb / αb, cs / αs)
+///   = αs x αb x cb / αb x cs / αs
+///   = αs x αb x cb x cs / (αs x αb)
+///   = cb x cs
 #[inline]
-pub(crate) fn multiply(cb: f32, cs: f32) -> f32 {
+pub(crate) fn multiply(cb: f32, cs: f32, _a_b: f32, _a_s: f32) -> f32 {
   cb * cs
 }
 
 /// B(Cb, Cs) = 1 - [(1 - Cb) x (1 - Cs)]
 ///           = Cb + Cs -(Cb x Cs)
+/// K = αs x αb x B(cb / αb, cs / αs)
+///   = αs x αb x (cb / αb + cs / αs - (cb / αb x cs / αs))
+///   = αs x cb + αb x cs - cb x cs
 #[inline]
-pub(crate) fn screen(cb: f32, cs: f32) -> f32 {
-  cb + cs - (cb * cs)
+pub(crate) fn screen(cb: f32, cs: f32, a_b: f32, a_s: f32) -> f32 {
+  a_s * cb + a_b * cs - cb * cs
 }
 
 /// B(Cb, Cs) = HardLight(Cs, Cb)
 #[inline]
-pub(crate) fn overlay(cb: f32, cs: f32) -> f32 {
-  hard_light(cs, cb)
+pub(crate) fn overlay(cb: f32, cs: f32, a_b: f32, a_s: f32) -> f32 {
+  hard_light(cs, cb, a_s, a_b)
 }
 
 /// B(Cb, Cs) = min(Cb, Cs)
+/// K = αs x αb x B(cb / αb, cs / αs)
+///   = αs x αb x min(cb / αb, cs / αs)
+/// 　　= min(cb x αs, cs x αb)
 #[inline]
-pub(crate) fn darken(cb: f32, cs: f32) -> f32 {
-  cb.min(cs)
+pub(crate) fn darken(cb: f32, cs: f32, a_b: f32, a_s: f32) -> f32 {
+  (cb * a_s).min(cs * a_b)
 }
 
 /// B(Cb, Cs) = max(Cb, Cs)
+/// K = αs x αb x B(cb / αb, cs / αs)
+///   = αs x αb x max(cb / αb, cs / αs)
+///   = max(cb x αs, cs x αb)
 #[inline]
-pub(crate) fn lighten(cb: f32, cs: f32) -> f32 {
-  cb.max(cs)
+pub(crate) fn lighten(cb: f32, cs: f32, a_b: f32, a_s: f32) -> f32 {
+  (cb * a_s).max(cs * a_b)
 }
 
 /// if(Cb == 0)
@@ -135,14 +151,32 @@ pub(crate) fn lighten(cb: f32, cs: f32) -> f32 {
 ///   B(Cb, Cs) = 1
 /// else
 ///   B(Cb, Cs) = min(1, Cb / (1 - Cs))
+/// ⇒
+/// if(cb / αb == 0)
+///   B(Cb, Cs) = 0
+///   K = αs x αb x B(cb / αb, cs / αs)
+///   K = 0
+/// else if(cs / αs == 1)
+///   B(Cb, Cs) = 1
+///   K = αs x αb x B(cb / αb, cs / αs)
+///   K = αs x αb
+/// else
+///   B(Cb, Cs) = min(1, Cb / (1 - Cs))
+///   K = αs x αb x B(cb / αb, cs / αs)
+///   K = αs x αb x min(1, cb / αb / (1 - cs / αs))
+///   K = αs x αb x min(1, cb / αb x 1 / (1 - cs / αs))
+///   K = αs x αb x min(1, cb / (αb x (1 - cs / αs)))
+///   K = min(αs x αb, αs x αb x cb / (αb x (1 - cs / αs)))
+///   K = min(αs x αb, αs x cb / (1 - cs / αs))
+///   K = min(αs x αb, αs x αs x cb / (αs - cs))
 #[inline]
-pub(crate) fn color_dodge(cb: f32, cs: f32) -> f32 {
+pub(crate) fn color_dodge(cb: f32, cs: f32, a_b: f32, a_s: f32) -> f32 {
   if cb == 0. {
     0.
-  } else if cs == 1. {
-    1.
+  } else if cs == a_s {
+    a_s * a_b
   } else {
-    (cb / (1. - cs)).min(1.)
+    (a_s * a_b).min((a_s * a_s * cb) / (a_s * cs))
   }
 }
 
@@ -152,14 +186,36 @@ pub(crate) fn color_dodge(cb: f32, cs: f32) -> f32 {
 ///   B(Cb, Cs) = 0
 /// else
 ///   B(Cb, Cs) = 1 - min(1, (1 - Cb) / Cs)
+/// ⇒
+/// if(cb / αb == 1)
+///   B(Cb, Cs) = 1
+///   K = αs x αb x B(cb / αb, cs / αs)
+///   K = αs x αb
+/// else if(cs / αs == 0)
+///   B(Cb, Cs) = 0
+///   K = αs x αb x B(cb / αb, cs / αs)
+///   K = 0
+/// else
+///   B(Cb, Cs) = 1 - min(1, (1 - Cb) / Cs)
+///   K = αs x αb x B(cb / αb, cs / αs)
+///   K = αs x αb x (1 - min(1, (1 - cb / αb) / (cs / αs)))
+///   K = αs x αb x (1 - min(1, (1 - cb / αb) x (αs / cs)))
+///   K = αs x αb x (1 - min(1, ((1 - cb / αb) x αs) / cs))
+///   K = αs x αb x (1 - min(1, (αs - cb x αs / αb) / cs))
+///   K = αs x αb x (1 - min(1, ((αs x αb - cb x αs) / αb) / cs))
+///   K = αs x αb x (1 - min(1, (αs x αb - cb x αs) / (αb x cs))
+/// 　　K = αs x αb - min(αs x αb, αs x αb x (αs x αb - cb x αs) / (αb x cs))
+///   K = αs x αb - min(αs x αb, αs x (αs x αb - cb x αs) / cs)
+///   K = αs x αb - min(αs x αb, (αs x αs x αb - cb x αs x αs) / cs)
+///   K = max(0, αs x αb - (αs x αs x αb - cb x αs x αs) / cs)
 #[inline]
-pub(crate) fn color_burn(cb: f32, cs: f32) -> f32 {
-  if cb == 1. {
-    1.
+pub(crate) fn color_burn(cb: f32, cs: f32, a_b: f32, a_s: f32) -> f32 {
+  if cb == a_b {
+    a_s * a_b
   } else if cs == 0. {
     0.
   } else {
-    1. - ((1. - cb) / cs).min(1.)
+    (a_s * a_b - (a_s * a_s * a_b - cb * a_s * a_s) / cs).max(0.)
   }
 }
 
@@ -167,76 +223,157 @@ pub(crate) fn color_burn(cb: f32, cs: f32) -> f32 {
 ///   B(Cb, Cs) = Multiply(Cb, 2 x Cs)
 /// else
 ///   B(Cb, Cs) = Screen(Cb, 2 x Cs -1)
+/// ⇒
+/// if(cs / αs <= 0.5)
+///   B(Cb, Cs) = Multiply(Cb, 2 x Cs)
+///             = Multiply(Cb, 2 x cs / αs)
+/// else
+///   B(Cb, Cs) = Screen(Cb, 2 x Cs -1)
+///             = Screen(Cb, 2 x cs / αs -1)
+///             = Screen(Cb, (2 x cs - αs) / αs)
 #[inline]
-pub(crate) fn hard_light(cb: f32, cs: f32) -> f32 {
-  if cs <= 0.5 {
-    multiply(cb, 2. * cs)
+pub(crate) fn hard_light(cb: f32, cs: f32, a_b: f32, a_s: f32) -> f32 {
+  if 2.0 * cs <= a_s {
+    multiply(cb, 2. * cs, a_b, a_s)
   } else {
-    screen(cb, 2. * cs - 1.)
+    screen(cb, 2. * cs - a_s, a_b, a_s)
   }
 }
 
-///   if(Cs <= 0.5)
-///     B(Cb, Cs) = Cb - (1 - 2 x Cs) x Cb x (1 - Cb)
+/// if(Cb <= 0.25)
+///   D(Cb) = ((16 * Cb - 12) x Cb + 4) x Cb
+/// else
+///   D(Cb) = sqrt(Cb)
+/// ⇒
+/// if(cb / αb <= 0.25)
+///   D(Cb) = ((16 * Cb - 12) x Cb + 4) x Cb
+///         = ((16 * cb / αb - 12) x cb / αb + 4) x cb / αb
+/// else
+///   D(Cb) = sqrt(Cb)
+/// 　　　　　　　　= sqrt(cb / αb)
+///
+/// ===
+///
+/// if(Cs <= 0.5)
+///   B(Cb, Cs) = Cb - (1 - 2 x Cs) x Cb x (1 - Cb)
+/// else
+///   B(Cb, Cs) = Cb + (2 x Cs - 1) x (D(Cb) - Cb)
+/// ⇒
+/// if(cs / αs <= 0.5)
+///   B(Cb, Cs) = Cb - (1 - 2 x Cs) x Cb x (1 - Cb)
+///   K = αs x αb x B(cb / αb, cs / αs)
+///     = αs x αb x (cb / αb - (1 - 2 x cs / αs) x cb / αb x (1 - cb / αb))
+///     = (as x cb - (1 - 2 x cs / αs) x cb x αs x (1 - cb / αb))
+///     = (as x cb - (αs - 2 x cs) / αs x cb x αs x (1 - cb / αb))
+///     = (as x cb - (αs - 2 x cs) x cb x (1 - cb / αb))
+/// else
+///   B(Cb, Cs) = Cb + (2 x Cs - 1) x (D(Cb) - Cb)
+///   K = αs x αb x B(cb / αb, cs / αs)
+///   K = αs x αb x (cb / αb + (2 x cs / αs - 1) x (D(cb / αb) - cb / αb))
+///   K = αs x αb x (cb / αb + (2 x cs - αs) / αs x (αb x D(cb / αb) - cb) / αb)
+///   K = cb x αs + (2 x cs - αs) x (αb x D(cb / αb) - cb)
+///   def: d = αb x D(Cb)
+///   K = cb x αs + (2 x cs - αs) x (d - cb)
+///
+///   if(cb / αb <= 0.25)
+///     d = αb x D(Cb)
+///       = αb x ((16 * cb / αb - 12) x cb / αb + 4) x cb / αb
+///       = ((16 * cb / αb - 12) x cb / αb + 4) x cb
 ///   else
-///     B(Cb, Cs) = Cb + (2 x Cs - 1) x (D(Cb) - Cb)
-/// with
-///   if(Cb <= 0.25)
-///     D(Cb) = ((16 * Cb - 12) x Cb + 4) x Cb
-///   else
-///     D(Cb) = sqrt(Cb)
+///     d = αb x D(Cb)
+///       = αb x sqrt(cb / αb)
+///       = sqrt(αb x αb x cb / αb)
+///       = sqrt(αb x cb)
 #[inline]
-pub(crate) fn soft_light_d(cb: f32) -> f32 {
-  if cb <= 0.25 {
-    ((16. * cb - 12.) * cb + 4.) * cb
-  } else {
-    cb.sqrt()
+pub(crate) fn soft_light(cb: f32, cs: f32, a_b: f32, a_s: f32) -> f32 {
+  if a_b == 0.0 {
+    return 0.0;
   }
-}
 
-#[inline]
-pub(crate) fn soft_light(cb: f32, cs: f32) -> f32 {
-  if cs <= 0.5 {
-    cb - (1. - 2. * cs) * cb * (1. - cb)
+  if 2.0 * cs <= a_s {
+    a_s * cb - (a_s - 2. * cs) * cb * (1. - cb / a_b)
   } else {
-    cb + (2. * cs - 1.) * (soft_light_d(cb) - cb)
+    let d = if 4. * cb <= a_b {
+      ((16. * cb / a_b - 12.) * cb / a_b + 4.) * cb
+    } else {
+      (a_b * cb).sqrt()
+    };
+    cb * a_s + (2. * cs - a_s) * (d - cb)
   }
 }
 
 /// B(Cb, Cs) = | Cb - Cs |
+/// K = αs x αb x B(cb / αb, cs / αs)
+///   = αs x αb x | cb / αb - cs / αs |
+///   = | cb x αs - cs x αb |
 #[inline]
-pub(crate) fn difference(cb: f32, cs: f32) -> f32 {
-  (cb - cs).abs()
+pub(crate) fn difference(cb: f32, cs: f32, a_b: f32, a_s: f32) -> f32 {
+  (cb * a_s - cs * a_b).abs()
 }
 
 /// B(Cb, Cs) = Cb + Cs - 2 x Cb x Cs
+/// K = αs x αb x B(cb / αb, cs / αs)
+///   = αs x αb x (cb / αb + cs / αs - 2 x cb / αb x cs / αs)
+///   = cb x αs + cs x αb - 2 x cb x cs
 #[inline]
-pub(crate) fn exclusion(cb: f32, cs: f32) -> f32 {
-  cb + cs - 2. * cb * cs
+pub(crate) fn exclusion(cb: f32, cs: f32, a_b: f32, a_s: f32) -> f32 {
+  cb * a_s + cs * a_b - 2. * cb * cs
 }
 
 /// B(Cb, Cs) = SetLum(SetSat(Cs, Sat(Cb)), Lum(Cb))
+/// K = αs x αb x B(cb / αb, cs / αs)
+///   = SetLum(SetSat(Cs, Sat(Cb)), Lum(Cb))
+/// NOTE: args of cb and cS are straight alpha value.
 #[inline]
-pub(crate) fn hue(cb: (f32, f32, f32), cs: (f32, f32, f32)) -> (f32, f32, f32) {
+pub(crate) fn hue(cb: (f32, f32, f32), cs: (f32, f32, f32), a_b: f32, a_s: f32) -> (f32, f32, f32) {
   let (r, g, b) = set_sat(cs.0, cs.1, cs.2, sat(cb.0, cb.1, cb.2));
-  set_lum(r, g, b, lum(cb.0, cb.1, cb.2))
+  let (r, g, b) = set_lum(r, g, b, lum(cb.0, cb.1, cb.2));
+
+  (a_s * a_b * r, a_s * a_b * g, a_s * a_b * b)
 }
 
 /// B(Cb, Cs) = SetLum(SetSat(Cb, Sat(Cs)), Lum(Cb))
+/// K = αs x αb x B(cb / αb, cs / αs)
+/// NOTE: args of cb and cS are straight alpha value.
 #[inline]
-pub(crate) fn saturation(cb: (f32, f32, f32), cs: (f32, f32, f32)) -> (f32, f32, f32) {
+pub(crate) fn saturation(
+  cb: (f32, f32, f32),
+  cs: (f32, f32, f32),
+  a_b: f32,
+  a_s: f32,
+) -> (f32, f32, f32) {
   let (r, g, b) = set_sat(cb.0, cb.1, cb.2, sat(cs.0, cs.1, cs.2));
-  set_lum(r, g, b, lum(cb.0, cb.1, cb.2))
+  let (r, g, b) = set_lum(r, g, b, lum(cb.0, cb.1, cb.2));
+
+  (a_s * a_b * r, a_s * a_b * g, a_s * a_b * b)
 }
 
 /// B(Cb, Cs) = SetLum(Cs, Lum(Cb))
+/// K = αs x αb x B(cb / αb, cs / αs)
+/// NOTE: args of cb and cS are straight alpha value.
 #[inline]
-pub(crate) fn color(cb: (f32, f32, f32), cs: (f32, f32, f32)) -> (f32, f32, f32) {
-  set_lum(cs.0, cs.1, cs.2, lum(cb.0, cb.1, cb.2))
+pub(crate) fn color(
+  cb: (f32, f32, f32),
+  cs: (f32, f32, f32),
+  a_b: f32,
+  a_s: f32,
+) -> (f32, f32, f32) {
+  let (r, g, b) = set_lum(cs.0, cs.1, cs.2, lum(cb.0, cb.1, cb.2));
+
+  (a_s * a_b * r, a_s * a_b * g, a_s * a_b * b)
 }
 
 /// B(Cb, Cs) = SetLum(Cb, Lum(Cs))
+/// K = αs x αb x B(cb / αb, cs / αs)
+/// NOTE: args of cb and cS are straight alpha value.
 #[inline]
-pub(crate) fn luminosity(cb: (f32, f32, f32), cs: (f32, f32, f32)) -> (f32, f32, f32) {
-  set_lum(cb.0, cb.1, cb.2, lum(cs.0, cs.1, cs.2))
+pub(crate) fn luminosity(
+  cb: (f32, f32, f32),
+  cs: (f32, f32, f32),
+  a_b: f32,
+  a_s: f32,
+) -> (f32, f32, f32) {
+  let (r, g, b) = set_lum(cb.0, cb.1, cb.2, lum(cs.0, cs.1, cs.2));
+
+  (a_s * a_b * r, a_s * a_b * g, a_s * a_b * b)
 }

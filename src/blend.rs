@@ -27,6 +27,142 @@ pub enum BlendMode {
   Luminosity,
 }
 
+impl BlendMode {
+  #[inline]
+  fn apply_k(&self, cb: C, cs: C) -> (f32, f32, f32) {
+    match self {
+      Self::Normal => {
+        let r = formula::normal(cb.r, cs.r, cb.a, cs.a);
+        let g = formula::normal(cb.g, cs.g, cb.a, cs.a);
+        let b = formula::normal(cb.b, cs.b, cb.a, cs.a);
+
+        (r, g, b)
+      }
+      Self::Multiply => {
+        let r = formula::multiply(cb.r, cs.r, cb.a, cs.a);
+        let g = formula::multiply(cb.g, cs.g, cb.a, cs.a);
+        let b = formula::multiply(cb.b, cs.b, cb.a, cs.a);
+
+        (r, g, b)
+      }
+      Self::Screen => {
+        let r = formula::screen(cb.r, cs.r, cb.a, cs.a);
+        let g = formula::screen(cb.g, cs.g, cb.a, cs.a);
+        let b = formula::screen(cb.b, cs.b, cb.a, cs.a);
+
+        (r, g, b)
+      }
+      Self::Overlay => {
+        let r = formula::overlay(cb.r, cs.r, cb.a, cs.a);
+        let g = formula::overlay(cb.g, cs.g, cb.a, cs.a);
+        let b = formula::overlay(cb.b, cs.b, cb.a, cs.a);
+
+        (r, g, b)
+      }
+      Self::Darken => {
+        let r = formula::darken(cb.r, cs.r, cb.a, cs.a);
+        let g = formula::darken(cb.g, cs.g, cb.a, cs.a);
+        let b = formula::darken(cb.b, cs.b, cb.a, cs.a);
+
+        (r, g, b)
+      }
+      Self::Lighten => {
+        let r = formula::lighten(cb.r, cs.r, cb.a, cs.a);
+        let g = formula::lighten(cb.g, cs.g, cb.a, cs.a);
+        let b = formula::lighten(cb.b, cs.b, cb.a, cs.a);
+
+        (r, g, b)
+      }
+      Self::ColorDodge => {
+        let r = formula::color_dodge(cb.r, cs.r, cb.a, cs.a);
+        let g = formula::color_dodge(cb.g, cs.g, cb.a, cs.a);
+        let b = formula::color_dodge(cb.b, cs.b, cb.a, cs.a);
+
+        (r, g, b)
+      }
+      Self::ColorBurn => {
+        let r = formula::color_burn(cb.r, cs.r, cb.a, cs.a);
+        let g = formula::color_burn(cb.g, cs.g, cb.a, cs.a);
+        let b = formula::color_burn(cb.b, cs.b, cb.a, cs.a);
+
+        (r, g, b)
+      }
+      Self::HardLight => {
+        let r = formula::hard_light(cb.r, cs.r, cb.a, cs.a);
+        let g = formula::hard_light(cb.g, cs.g, cb.a, cs.a);
+        let b = formula::hard_light(cb.b, cs.b, cb.a, cs.a);
+
+        (r, g, b)
+      }
+      Self::SoftLight => {
+        let r = formula::soft_light(cb.r, cs.r, cb.a, cs.a);
+        let g = formula::soft_light(cb.g, cs.g, cb.a, cs.a);
+        let b = formula::soft_light(cb.b, cs.b, cb.a, cs.a);
+
+        (r, g, b)
+      }
+      Self::Difference => {
+        let r = formula::difference(cb.r, cs.r, cb.a, cs.a);
+        let g = formula::difference(cb.g, cs.g, cb.a, cs.a);
+        let b = formula::difference(cb.b, cs.b, cb.a, cs.a);
+
+        (r, g, b)
+      }
+      Self::Exclusion => {
+        let r = formula::exclusion(cb.r, cs.r, cb.a, cs.a);
+        let g = formula::exclusion(cb.g, cs.g, cb.a, cs.a);
+        let b = formula::exclusion(cb.b, cs.b, cb.a, cs.a);
+
+        (r, g, b)
+      }
+      Self::Hue => {
+        let s_cb = cb.to_straight_alpha();
+        let s_cs = cs.to_straight_alpha();
+
+        formula::hue(
+          (s_cb.r, s_cb.g, s_cb.b),
+          (s_cs.r, s_cs.g, s_cs.b),
+          cb.a,
+          cs.a,
+        )
+      }
+      Self::Saturation => {
+        let s_cb = cb.to_straight_alpha();
+        let s_cs = cs.to_straight_alpha();
+
+        formula::saturation(
+          (s_cb.r, s_cb.g, s_cb.b),
+          (s_cs.r, s_cs.g, s_cs.b),
+          cb.a,
+          cs.a,
+        )
+      }
+      Self::Color => {
+        let s_cb = cb.to_straight_alpha();
+        let s_cs = cs.to_straight_alpha();
+
+        formula::color(
+          (s_cb.r, s_cb.g, s_cb.b),
+          (s_cs.r, s_cs.g, s_cs.b),
+          cb.a,
+          cs.a,
+        )
+      }
+      Self::Luminosity => {
+        let s_cb = cb.to_straight_alpha();
+        let s_cs = cs.to_straight_alpha();
+
+        formula::luminosity(
+          (s_cb.r, s_cb.g, s_cb.b),
+          (s_cs.r, s_cs.g, s_cs.b),
+          cb.a,
+          cs.a,
+        )
+      }
+    }
+  }
+}
+
 /// A trait that represents blendable types.
 /// Implementing this trait enables blending
 /// that complies with the W3C specification.
@@ -90,6 +226,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.normal(&backdrop);
   /// ```
+  #[inline]
   fn normal(&self, backdrop: &impl Blend) -> Self {
     self.normal_with(backdrop, PorterDuff::SourceOver)
   }
@@ -99,6 +236,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.normal_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn normal_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::Normal, op)
   }
@@ -109,6 +247,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.multiply(&backdrop);
   /// ```
+  #[inline]
   fn multiply(&self, backdrop: &impl Blend) -> Self {
     self.multiply_with(backdrop, PorterDuff::SourceOver)
   }
@@ -118,6 +257,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.multiply_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn multiply_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::Multiply, op)
   }
@@ -128,6 +268,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.screen(&backdrop);
   /// ```
+  #[inline]
   fn screen(&self, backdrop: &impl Blend) -> Self {
     self.screen_with(backdrop, PorterDuff::SourceOver)
   }
@@ -137,6 +278,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.screen_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn screen_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::Screen, op)
   }
@@ -147,6 +289,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.overlay(&backdrop);
   /// ```
+  #[inline]
   fn overlay(&self, backdrop: &impl Blend) -> Self {
     self.overlay_with(backdrop, PorterDuff::SourceOver)
   }
@@ -156,6 +299,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.overlay_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn overlay_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::Overlay, op)
   }
@@ -166,6 +310,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.darken(&backdrop);
   /// ```
+  #[inline]
   fn darken(&self, backdrop: &impl Blend) -> Self {
     self.darken_with(backdrop, PorterDuff::SourceOver)
   }
@@ -175,6 +320,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.darken_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn darken_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::Darken, op)
   }
@@ -185,6 +331,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.lighten(&backdrop);
   /// ```
+  #[inline]
   fn lighten(&self, backdrop: &impl Blend) -> Self {
     self.lighten_with(backdrop, PorterDuff::SourceOver)
   }
@@ -194,6 +341,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.lighten_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn lighten_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::Lighten, op)
   }
@@ -204,6 +352,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.color_dodge(&backdrop);
   /// ```
+  #[inline]
   fn color_dodge(&self, backdrop: &impl Blend) -> Self {
     self.color_dodge_with(backdrop, PorterDuff::SourceOver)
   }
@@ -213,6 +362,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.color_dodge_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn color_dodge_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::ColorDodge, op)
   }
@@ -223,6 +373,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.color_burn(&backdrop);
   /// ```
+  #[inline]
   fn color_burn(&self, backdrop: &impl Blend) -> Self {
     self.color_burn_with(backdrop, PorterDuff::SourceOver)
   }
@@ -232,6 +383,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.color_burn_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn color_burn_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::ColorBurn, op)
   }
@@ -242,6 +394,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.hard_light(&backdrop);
   /// ```
+  #[inline]
   fn hard_light(&self, backdrop: &impl Blend) -> Self {
     self.hard_light_with(backdrop, PorterDuff::SourceOver)
   }
@@ -251,6 +404,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.hard_light_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn hard_light_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::HardLight, op)
   }
@@ -261,6 +415,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.soft_light(&backdrop);
   /// ```
+  #[inline]
   fn soft_light(&self, backdrop: &impl Blend) -> Self {
     self.soft_light_with(backdrop, PorterDuff::SourceOver)
   }
@@ -270,6 +425,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.soft_light_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn soft_light_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::SoftLight, op)
   }
@@ -280,6 +436,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.difference(&backdrop);
   /// ```
+  #[inline]
   fn difference(&self, backdrop: &impl Blend) -> Self {
     self.difference_with(backdrop, PorterDuff::SourceOver)
   }
@@ -289,6 +446,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.difference_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn difference_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::Difference, op)
   }
@@ -299,6 +457,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.exclusion(&backdrop);
   /// ```
+  #[inline]
   fn exclusion(&self, backdrop: &impl Blend) -> Self {
     self.exclusion_with(backdrop, PorterDuff::SourceOver)
   }
@@ -308,6 +467,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.exclusion_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn exclusion_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::Exclusion, op)
   }
@@ -318,6 +478,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.hue(&backdrop);
   /// ```
+  #[inline]
   fn hue(&self, backdrop: &impl Blend) -> Self {
     self.hue_with(backdrop, PorterDuff::SourceOver)
   }
@@ -327,6 +488,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.hue_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn hue_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::Hue, op)
   }
@@ -337,6 +499,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.saturation(&backdrop);
   /// ```
+  #[inline]
   fn saturation(&self, backdrop: &impl Blend) -> Self {
     self.saturation_with(backdrop, PorterDuff::SourceOver)
   }
@@ -346,6 +509,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.saturation_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn saturation_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::Saturation, op)
   }
@@ -356,6 +520,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.color(&backdrop);
   /// ```
+  #[inline]
   fn color(&self, backdrop: &impl Blend) -> Self {
     self.color_with(backdrop, PorterDuff::SourceOver)
   }
@@ -365,6 +530,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.color_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn color_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::Color, op)
   }
@@ -375,6 +541,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.luminosity(&backdrop);
   /// ```
+  #[inline]
   fn luminosity(&self, backdrop: &impl Blend) -> Self {
     self.luminosity_with(backdrop, PorterDuff::SourceOver)
   }
@@ -384,6 +551,7 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.luminosity_with(&backdrop, PorterDuff::Destination)
   /// ```
+  #[inline]
   fn luminosity_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
     self.blend_with(backdrop, BlendMode::Luminosity, op)
   }
@@ -393,119 +561,49 @@ pub trait Blend: Sized {
   /// ```
   /// let result = source.blend_with(&backdrop, BlendMode::Lighten, PorterDuff::SourceAtop)
   /// ```
+  #[inline]
   fn blend_with(&self, backdrop: &impl Blend, mode: BlendMode, op: PorterDuff) -> Self {
-    match mode {
-      BlendMode::Normal => Self::composite_separable(formula::normal, op)(backdrop, self),
-      BlendMode::Multiply => Self::composite_separable(formula::multiply, op)(backdrop, self),
-      BlendMode::Screen => Self::composite_separable(formula::screen, op)(backdrop, self),
-      BlendMode::Overlay => Self::composite_separable(formula::overlay, op)(backdrop, self),
-      BlendMode::Darken => Self::composite_separable(formula::darken, op)(backdrop, self),
-      BlendMode::Lighten => Self::composite_separable(formula::lighten, op)(backdrop, self),
-      BlendMode::ColorDodge => Self::composite_separable(formula::color_dodge, op)(backdrop, self),
-      BlendMode::ColorBurn => Self::composite_separable(formula::color_burn, op)(backdrop, self),
-      BlendMode::HardLight => Self::composite_separable(formula::hard_light, op)(backdrop, self),
-      BlendMode::SoftLight => Self::composite_separable(formula::soft_light, op)(backdrop, self),
-      BlendMode::Difference => Self::composite_separable(formula::difference, op)(backdrop, self),
-      BlendMode::Exclusion => Self::composite_separable(formula::exclusion, op)(backdrop, self),
-      BlendMode::Hue => Self::composite_non_separable(formula::hue, op)(backdrop, self),
-      BlendMode::Saturation => {
-        Self::composite_non_separable(formula::saturation, op)(backdrop, self)
-      }
-      BlendMode::Color => Self::composite_non_separable(formula::color, op)(backdrop, self),
-      BlendMode::Luminosity => {
-        Self::composite_non_separable(formula::luminosity, op)(backdrop, self)
-      }
+    let cb = backdrop.to_color();
+    let cs = self.to_color();
+
+    // Since “Normal Blend” and “SourceOver Composite” are a commonly used combination,
+    // use the formula optimized for performance.
+    if mode == BlendMode::Normal && op == PorterDuff::SourceOver {
+      // Cr = Cs + Cb x (1 - αs)
+      // αr = αs + αb x (1 - αs)
+      let r = cs.r + cb.r * (1. - cs.a);
+      let g = cs.g + cb.g * (1. - cs.a);
+      let b = cs.b + cb.b * (1. - cs.a);
+      let a = cs.a + cb.a * (1. - cs.a);
+
+      return Self::from_color(C::new(r, g, b, a));
     }
-  }
 
-  /// General composite function for each component of the result color is completely determined by
-  /// the corresponding components of the constituent backdrop and source colors.
-  /// <https://www.w3.org/TR/compositing-1/#blendingseparable>
-  fn composite_separable<B: Blend, F, Op: CompositeOperator>(
-    f: F,
-    op: Op,
-  ) -> impl Fn(&B, &Self) -> Self
-  where
-    F: Fn(f32, f32) -> f32,
-  {
-    move |backdrop, src| -> Self {
-      let cb = backdrop.to_color();
-      let cs = src.to_color();
+    // Blending: Cr = (1 - αb) x Cs + αb x B(Cb, Cs)
+    // Compositing: co = αs x Fa x Cr + αb x Fb x Cb
+    // https://www.w3.org/TR/compositing-1/#blending
+    // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators
+    // co = αs x Fa x ((1 - αb) x Cs + αb x B(Cb, Cs)) + αb x Fb x Cb
+    // co = αs x Fa x (1 - αb) x Cs + αs x Fa x αb x B(Cb, Cs) + αb x Fb x Cb
+    // co = αs x Fa x (1 - αb) x cs / αs + αs x Fa x αb x B(cb / αb, cs / αs) + αb x Fb x cb / αb
+    // co = Fa x (1 - αb) x cs + αs x Fa x αb x B(cb / αb, cs / αs) + Fb x cb
+    // co = Fa x (1 - αb) x cs + Fa x αs x αb x B(cb / αb, cs / αs) + Fb x cb
+    // def: K = αs x αb x B(cb / αb, cs / αs)
+    //      K is blending formula for premultiplied alpha
+    // co = Fa x (1 - αb) x cs + Fa x K + Fb x cb
+    let (k_r, k_g, k_b) = mode.apply_k(cb, cs);
 
-      if cs.a == 0. && cb.a == 0. {
-        return Self::from_color(C::ZERO);
-      }
+    let (fa, fb) = op.fractions(cs.a, cb.a);
 
-      // Blending: Cr = (1 - αb) x Cs + αb x B(Cb, Cs)
-      // https://www.w3.org/TR/compositing-1/#blending
-      let blended_r = (1. - cb.a) * cs.r + cb.a * f(cb.r, cs.r);
-      let blended_g = (1. - cb.a) * cs.g + cb.a * f(cb.g, cs.g);
-      let blended_b = (1. - cb.a) * cs.b + cb.a * f(cb.b, cs.b);
+    // αo = αs x Fa + αb x Fb
+    let a0 = cs.a * fa + cb.a * fb;
+    let inv_b_a = 1. - cb.a;
 
-      // Composite: Co = αs x Fa x Cs + αb x Fb x Cb
-      // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators
-      let (fa, fb) = op.fractions(cs.a, cb.a);
-      let pm_r = cs.a * fa * blended_r + cb.a * fb * cb.r;
-      let pm_g = cs.a * fa * blended_g + cb.a * fb * cb.g;
-      let pm_b = cs.a * fa * blended_b + cb.a * fb * cb.b;
-      // αo = αs x Fa + αb x Fb
-      let a0 = cs.a * fa + cb.a * fb;
+    let co_r = fa * inv_b_a * cs.r + fa * k_r + fb * cb.r;
+    let co_g = fa * inv_b_a * cs.g + fa * k_g + fb * cb.g;
+    let co_b = fa * inv_b_a * cs.b + fa * k_b + fb * cb.b;
 
-      if a0 == 0. {
-        return Self::from_color(C::ZERO);
-      }
-
-      let r = (pm_r / a0).clamp(0.0, 1.0);
-      let g = (pm_g / a0).clamp(0.0, 1.0);
-      let b = (pm_b / a0).clamp(0.0, 1.0);
-
-      Self::from_color(C::new(r, g, b, a0))
-    }
-  }
-
-  /// General composite function for all color components in combination.
-  /// <https://www.w3.org/TR/compositing-1/#blendingnonseparable>
-  fn composite_non_separable<B: Blend, F, Op: CompositeOperator>(
-    f: F,
-    op: Op,
-  ) -> impl Fn(&B, &Self) -> Self
-  where
-    F: Fn((f32, f32, f32), (f32, f32, f32)) -> (f32, f32, f32),
-  {
-    move |backdrop, src| -> Self {
-      let cb = backdrop.to_color();
-      let cs = src.to_color();
-
-      if cs.a == 0. && cb.a == 0. {
-        return Self::from_color(C::ZERO);
-      }
-
-      // Blending: Cr = (1 - αb) x Cs + αb x B(Cb, Cs)
-      // https://www.w3.org/TR/compositing-1/#blending
-      let (b_r, b_g, b_b) = f((cb.r, cb.g, cb.b), (cs.r, cs.g, cs.b));
-      let blended_r = (1. - cb.a) * cs.r + cb.a * b_r;
-      let blended_g = (1. - cb.a) * cs.g + cb.a * b_g;
-      let blended_b = (1. - cb.a) * cs.b + cb.a * b_b;
-
-      // Composite: Co = αs x Fa x Cr + αb x Fb x Cb
-      // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators
-      let (fa, fb) = op.fractions(cs.a, cb.a);
-      let pm_r = cs.a * fa * blended_r + cb.a * fb * cb.r;
-      let pm_g = cs.a * fa * blended_g + cb.a * fb * cb.g;
-      let pm_b = cs.a * fa * blended_b + cb.a * fb * cb.b;
-      // αo = αs x Fa + αb x Fb
-      let a0 = cs.a * fa + cb.a * fb;
-
-      if a0 == 0. {
-        return Self::from_color(C::ZERO);
-      }
-
-      let r = (pm_r / a0).clamp(0.0, 1.0);
-      let g = (pm_g / a0).clamp(0.0, 1.0);
-      let b = (pm_b / a0).clamp(0.0, 1.0);
-
-      Self::from_color(C::new(r, g, b, a0))
-    }
+    Self::from_color(C::new(co_r, co_g, co_b, a0))
   }
 }
 
@@ -524,6 +622,10 @@ mod tests {
   impl Rgba {
     fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
       Self { r, g, b, a }
+    }
+
+    fn from_straight(r: f32, g: f32, b: f32, a: f32) -> Self {
+      Self::new(r * a, g * a, b * a, a)
     }
   }
 
@@ -558,8 +660,8 @@ mod tests {
 
   #[test]
   fn test_transparent_over_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.);
-    let fg = Rgba::new(0., 0., 1., 0.);
+    let bg = Rgba::from_straight(1., 0., 0., 0.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.);
 
     let results = vec![
       fg.normal(&bg),
@@ -581,14 +683,14 @@ mod tests {
     ];
 
     for result in results {
-      assert_rgba(result, Rgba::new(0., 0., 0., 0.));
+      assert_rgba(result, Rgba::from_straight(0., 0., 0., 0.));
     }
   }
 
   #[test]
   fn test_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.);
 
     let results = vec![
       fg.normal(&bg),
@@ -610,14 +712,14 @@ mod tests {
     ];
 
     for result in results {
-      assert_rgba(result, Rgba::new(1., 0., 0., 1.));
+      assert_rgba(result, Rgba::from_straight(1., 0., 0., 1.));
     }
   }
 
   #[test]
   fn test_normal_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -625,13 +727,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (0., 0., 1.) = (0., 0., 1.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 1. x 1. x (0., 0., 1.) + 1. x 0. x (1., 0., 0.) = (0., 0., 1.)
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. x 0. = 1.
-    assert_rgba(fg.normal(&bg), Rgba::new(0. / 1., 0. / 1., 1. / 1., 1.));
+    assert_rgba(
+      fg.normal(&bg),
+      Rgba::from_straight(0. / 1., 0. / 1., 1. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_normal_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -639,13 +744,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (0., 0., 1.) = (0., 0., 1.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 0.5 x 1. x (0., 0., 1.) + 1. x 0.5 x (1., 0., 0.) = (0., 0., 0.5) + (0.5, 0., 0.) = (0.5, 0., 0.5)
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 0.5 + 0.5 = 1.0
-    assert_rgba(fg.normal(&bg), Rgba::new(0.5 / 1., 0. / 1., 0.5 / 1., 1.));
+    assert_rgba(
+      fg.normal(&bg),
+      Rgba::from_straight(0.5 / 1., 0. / 1., 0.5 / 1., 1.),
+    );
   }
 
   #[test]
   fn test_normal_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -655,14 +763,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.normal(&bg),
-      Rgba::new(0.25 / 0.75, 0. / 0.75, 0.5 / 0.75, 0.75),
+      Rgba::from_straight(0.25 / 0.75, 0. / 0.75, 0.5 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_multiply_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -670,13 +778,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (0., 0., 0.) = (0., 0., 0.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 1. x 1. x (0., 0., 0.) + 1. x 0. x (1., 0., 0.) = (0., 0., 0.)
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
-    assert_rgba(fg.multiply(&bg), Rgba::new(0. / 1., 0. / 1., 0. / 1., 1.));
+    assert_rgba(
+      fg.multiply(&bg),
+      Rgba::from_straight(0. / 1., 0. / 1., 0. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_multiply_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -684,13 +795,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (0., 0., 0.) = (0., 0., 0.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 0.5 x 1. x (0., 0., 0.) + 1. x 0.5 x (1., 0., 0.) = (0., 0., 0.) + (0.5, 0., 0.) = (0.5, 0., 0.)
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
-    assert_rgba(fg.multiply(&bg), Rgba::new(0.5 / 1., 0. / 1., 0. / 1., 1.));
+    assert_rgba(
+      fg.multiply(&bg),
+      Rgba::from_straight(0.5 / 1., 0. / 1., 0. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_multiply_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -700,14 +814,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.multiply(&bg),
-      Rgba::new(0.25 / 0.75, 0., 0.25 / 0.75, 0.75),
+      Rgba::from_straight(0.25 / 0.75, 0., 0.25 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_screen_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -715,13 +829,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 1.) = (1., 0., 1.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 1. x 1. x (1., 0., 1.) + 1. x 0. x (1., 0., 0.) = (1., 0., 1.)
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
-    assert_rgba(fg.screen(&bg), Rgba::new(1. / 1., 0. / 1., 1. / 1., 1.));
+    assert_rgba(
+      fg.screen(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 1. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_screen_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -729,13 +846,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 1.) = (1., 0., 1.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 0.5 x 1. x (1., 0., 1.) + 1. x 0.5 x (1., 0., 0.) = (0.5, 0., 0.5) + (0.5, 0., 0.) = (1., 0., 0.5)
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
-    assert_rgba(fg.screen(&bg), Rgba::new(1. / 1., 0. / 1., 0.5 / 1., 1.));
+    assert_rgba(
+      fg.screen(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 0.5 / 1., 1.),
+    );
   }
 
   #[test]
   fn test_screen_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -745,14 +865,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.screen(&bg),
-      Rgba::new(0.5 / 0.75, 0. / 0.75, 0.5 / 0.75, 0.75),
+      Rgba::from_straight(0.5 / 0.75, 0. / 0.75, 0.5 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_overlay_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -768,13 +888,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 0.) = (1., 0., 0.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 1. x 1. x (1., 0., 0.) + 1. x 0. x (1., 0., 0.) = (1., 0., 0.)
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
-    assert_rgba(fg.overlay(&bg), Rgba::new(1. / 1., 0. / 1., 0. / 1., 1.));
+    assert_rgba(
+      fg.overlay(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 0. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_overlay_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -790,13 +913,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 0.) = (1., 0., 0.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 0.5 x 1. x (1., 0., 0.) + 1. x 0.5 x (1., 0., 0.) = (0.5, 0., 0.) + (0.5, 0., 0.) = (1., 0., 0.)
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
-    assert_rgba(fg.overlay(&bg), Rgba::new(1. / 1., 0. / 1., 0. / 1., 1.));
+    assert_rgba(
+      fg.overlay(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 0. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_overlay_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -814,14 +940,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.overlay(&bg),
-      Rgba::new(0.5 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
+      Rgba::from_straight(0.5 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_darken_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -829,13 +955,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (0., 0., 0.) = (0., 0., 0.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 1. x 1. x (0., 0., 0.) + 1. x 0. x (1., 0., 0.) = (0., 0., 0.)
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
-    assert_rgba(fg.darken(&bg), Rgba::new(0. / 1., 0. / 1., 0. / 1., 1.));
+    assert_rgba(
+      fg.darken(&bg),
+      Rgba::from_straight(0. / 1., 0. / 1., 0. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_darken_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -843,13 +972,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (0., 0., 0.) = (0., 0., 0.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 0.5 x 1. x (0., 0., 0.) + 1. x 0.5 x (1., 0., 0.) = (0.5, 0., 0.)
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
-    assert_rgba(fg.darken(&bg), Rgba::new(0.5 / 1., 0. / 1., 0. / 1., 1.));
+    assert_rgba(
+      fg.darken(&bg),
+      Rgba::from_straight(0.5 / 1., 0. / 1., 0. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_darken_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -859,14 +991,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.darken(&bg),
-      Rgba::new(0.25 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
+      Rgba::from_straight(0.25 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_lighten_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -874,13 +1006,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 1.) = (1., 0., 1.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 1. x 1. (1., 0., 1.) + 1. x 0. x (1., 0., 0.) = (1., 0., 1.)
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
-    assert_rgba(fg.lighten(&bg), Rgba::new(1. / 1., 0. / 1., 1. / 1., 1.));
+    assert_rgba(
+      fg.lighten(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 1. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_lighten_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -888,13 +1023,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 1.) = (1., 0., 1.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 0.5 x 1. x (1., 0., 1.) + 1. x 0.5 x (1., 0., 0.) = (0.5, 0., 0.5) + (0.5, 0., 0.) = (1., 0., 0.5)
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
-    assert_rgba(fg.lighten(&bg), Rgba::new(1. / 1., 0. / 1., 0.5 / 1., 1.));
+    assert_rgba(
+      fg.lighten(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 0.5 / 1., 1.),
+    );
   }
 
   #[test]
   fn test_lighten_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -904,14 +1042,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.lighten(&bg),
-      Rgba::new(0.5 / 0.75, 0. / 0.75, 0.5 / 0.75, 0.75),
+      Rgba::from_straight(0.5 / 0.75, 0. / 0.75, 0.5 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_color_dodge_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -930,14 +1068,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
     assert_rgba(
       fg.color_dodge(&bg),
-      Rgba::new(1. / 1., 0. / 1., 0. / 1., 1.),
+      Rgba::from_straight(1. / 1., 0. / 1., 0. / 1., 1.),
     );
   }
 
   #[test]
   fn test_color_dodge_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -956,14 +1094,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
     assert_rgba(
       fg.color_dodge(&bg),
-      Rgba::new(1. / 1., 0. / 1., 0. / 1., 1.),
+      Rgba::from_straight(1. / 1., 0. / 1., 0. / 1., 1.),
     );
   }
 
   #[test]
   fn test_color_dodge_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -982,14 +1120,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.color_dodge(&bg),
-      Rgba::new(0.5 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
+      Rgba::from_straight(0.5 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_color_burn_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -1006,13 +1144,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 0.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 1. x 1. x (1., 0., 0.) + 1. x 0. x (1., 0., 0.)
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
-    assert_rgba(fg.color_burn(&bg), Rgba::new(1. / 1., 0. / 1., 0. / 1., 1.));
+    assert_rgba(
+      fg.color_burn(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 0. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_color_burn_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1029,13 +1170,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 0.) = (1., 0., 0.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 0.5 x 1. x (1., 0., 0.) + 1. x 0.5 x (1., 0., 0.) = (0.5, 0., 0.) + (0.5, 0., 0.) = (1., 0., 0.)
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
-    assert_rgba(fg.color_burn(&bg), Rgba::new(1. / 1., 0. / 1., 0. / 1., 1.));
+    assert_rgba(
+      fg.color_burn(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 0. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_color_burn_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1054,14 +1198,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.color_burn(&bg),
-      Rgba::new(0.5 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
+      Rgba::from_straight(0.5 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_hard_light_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -1076,13 +1220,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (0., 0., 1.) = (0., 0., 1.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 1. x 1. x (0., 0., 1.) + 1. x 0. x (1., 0., 0.) = (0., 0., 1.)
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
-    assert_rgba(fg.hard_light(&bg), Rgba::new(0. / 1., 0. / 1., 1. / 1., 1.));
+    assert_rgba(
+      fg.hard_light(&bg),
+      Rgba::from_straight(0. / 1., 0. / 1., 1. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_hard_light_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1099,14 +1246,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
     assert_rgba(
       fg.hard_light(&bg),
-      Rgba::new(0.5 / 1., 0. / 1., 0.5 / 1., 1.),
+      Rgba::from_straight(0.5 / 1., 0. / 1., 0.5 / 1., 1.),
     );
   }
 
   #[test]
   fn test_hard_light_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1123,14 +1270,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.hard_light(&bg),
-      Rgba::new(0.25 / 0.75, 0. / 0.75, 0.5 / 0.75, 0.75),
+      Rgba::from_straight(0.25 / 0.75, 0. / 0.75, 0.5 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_soft_light_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -1150,13 +1297,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 0.) = (1., 0., 0.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 1. x 1. x (1., 0., 0.) + 1. x 0. x (1., 0., 0.) = (1., 0., 0.)
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
-    assert_rgba(fg.soft_light(&bg), Rgba::new(1. / 1., 0. / 1., 0. / 1., 1.));
+    assert_rgba(
+      fg.soft_light(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 0. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_soft_light_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1176,13 +1326,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 0.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 0.5 x 1. x (1., 0., 0.) + 1. x 0.5 x (1., 0., 0.) = (0.5, 0., 0.) + (0.5, 0., 0.) = (1., 0., 0.)
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
-    assert_rgba(fg.soft_light(&bg), Rgba::new(1. / 1., 0. / 1., 0. / 1., 1.));
+    assert_rgba(
+      fg.soft_light(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 0. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_soft_light_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1204,14 +1357,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.soft_light(&bg),
-      Rgba::new(0.5 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
+      Rgba::from_straight(0.5 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_difference_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -1220,13 +1373,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 1.) = (1., 0., 1.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 1. x 1. x (1., 0., 1.) + 1. x 0. x (1., 0., 0.) = (1., 0., 1.)
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
-    assert_rgba(fg.difference(&bg), Rgba::new(1. / 1., 0. / 1., 1. / 1., 1.));
+    assert_rgba(
+      fg.difference(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 1. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_difference_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1237,14 +1393,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
     assert_rgba(
       fg.difference(&bg),
-      Rgba::new(1. / 1., 0. / 1., 0.5 / 1., 1.),
+      Rgba::from_straight(1. / 1., 0. / 1., 0.5 / 1., 1.),
     );
   }
 
   #[test]
   fn test_difference_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1255,14 +1411,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.difference(&bg),
-      Rgba::new(0.5 / 0.75, 0. / 0.75, 0.5 / 0.75, 0.75),
+      Rgba::from_straight(0.5 / 0.75, 0. / 0.75, 0.5 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_exclusion_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -1271,13 +1427,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 1.) = (1., 0., 1.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 1. x 1. x (1., 0., 1.) + 1. x 0. x (1., 0., 0.) = (1., 0., 1.)
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
-    assert_rgba(fg.exclusion(&bg), Rgba::new(1. / 1., 0. / 1., 1. / 1., 1.));
+    assert_rgba(
+      fg.exclusion(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 1. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_exclusion_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1286,13 +1445,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 1.) = (1., 0., 1.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 0.5 x 1. x (1., 0., 1.) + 1. x 0.5 x (1., 0., 0.) = (0.5, 0., 0.5) + (0.5, 0., 0.) = (1., 0., 0.5)
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
-    assert_rgba(fg.exclusion(&bg), Rgba::new(1. / 1., 0. / 1., 0.5 / 1., 1.));
+    assert_rgba(
+      fg.exclusion(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 0.5 / 1., 1.),
+    );
   }
 
   #[test]
   fn test_exclusion_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1303,14 +1465,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.exclusion(&bg),
-      Rgba::new(0.5 / 0.75, 0. / 0.75, 0.5 / 0.75, 0.75),
+      Rgba::from_straight(0.5 / 0.75, 0. / 0.75, 0.5 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_hue_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -1339,14 +1501,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
     assert_rgba(
       fg.hue(&bg),
-      Rgba::new(0.19 / 0.89 / 1., 0.19 / 0.89 / 1., 1. / 1., 1.),
+      Rgba::from_straight(0.19 / 0.89 / 1., 0.19 / 0.89 / 1., 1. / 1., 1.),
     );
   }
 
   #[test]
   fn test_hue_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1375,14 +1537,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
     assert_rgba(
       fg.hue(&bg),
-      Rgba::new(0.54 / 0.89 / 1., 0.095 / 0.89 / 1., 0.5 / 1., 1.),
+      Rgba::from_straight(0.54 / 0.89 / 1., 0.095 / 0.89 / 1., 0.5 / 1., 1.),
     );
   }
 
   #[test]
   fn test_hue_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1411,14 +1573,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.hue(&bg),
-      Rgba::new(0.27 / 0.89 / 0.75, 0.0475 / 0.89 / 0.75, 0.5 / 0.75, 0.75),
+      Rgba::from_straight(0.27 / 0.89 / 0.75, 0.0475 / 0.89 / 0.75, 0.5 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_saturation_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -1440,13 +1602,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 0.) = (1., 0., 0.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 1. x 1. x (1., 0., 0.) + 1. x 0. x (1., 0., 0.) = (1., 0., 0.)
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
-    assert_rgba(fg.saturation(&bg), Rgba::new(1. / 1., 0. / 1., 0. / 1., 1.));
+    assert_rgba(
+      fg.saturation(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 0. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_saturation_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1468,13 +1633,16 @@ mod tests {
     // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0., 0., 1.) + 1. x (1., 0., 0.)
     // Co = αs x Fa x Cr + αb x Fb x Cb = 0.5 x 1. x (1., 0., 0.) + 1. x 0.5 x (1., 0., 0.) = (0.5, 0., 0.) + (0.5, 0., 0.) = (1., 0., 0.)
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
-    assert_rgba(fg.saturation(&bg), Rgba::new(1. / 1., 0. / 1., 0. / 1., 1.));
+    assert_rgba(
+      fg.saturation(&bg),
+      Rgba::from_straight(1. / 1., 0. / 1., 0. / 1., 1.),
+    );
   }
 
   #[test]
   fn test_saturation_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1498,14 +1666,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.saturation(&bg),
-      Rgba::new(0.5 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
+      Rgba::from_straight(0.5 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_color_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -1531,14 +1699,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
     assert_rgba(
       fg.color(&bg),
-      Rgba::new(0.19 / 0.89 / 1., 0.19 / 0.89 / 1., 1. / 1., 1.),
+      Rgba::from_straight(0.19 / 0.89 / 1., 0.19 / 0.89 / 1., 1. / 1., 1.),
     );
   }
 
   #[test]
   fn test_color_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1564,14 +1732,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
     assert_rgba(
       fg.color(&bg),
-      Rgba::new(0.54 / 0.89 / 1., 0.095 / 0.89 / 1., 0.5 / 1., 1.),
+      Rgba::from_straight(0.54 / 0.89 / 1., 0.095 / 0.89 / 1., 0.5 / 1., 1.),
     );
   }
 
   #[test]
   fn test_color_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1597,14 +1765,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.color(&bg),
-      Rgba::new(0.27 / 0.89 / 0.75, 0.0475 / 0.89 / 0.75, 0.5 / 0.75, 0.75),
+      Rgba::from_straight(0.27 / 0.89 / 0.75, 0.0475 / 0.89 / 0.75, 0.5 / 0.75, 0.75),
     );
   }
 
   #[test]
   fn test_luminosity_opaque_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 1.);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 1.);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.
@@ -1629,14 +1797,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 1. x 1. + 1. 0. = 1.
     assert_rgba(
       fg.luminosity(&bg),
-      Rgba::new(0.11 / 0.3 / 1., 0. / 1., 0. / 1., 1.),
+      Rgba::from_straight(0.11 / 0.3 / 1., 0. / 1., 0. / 1., 1.),
     );
   }
 
   #[test]
   fn test_luminosity_semi_transparent_over_opaque() {
-    let bg = Rgba::new(1., 0., 0., 1.);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 1.);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1661,14 +1829,14 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 1. x 0.5 = 1.
     assert_rgba(
       fg.luminosity(&bg),
-      Rgba::new(0.205 / 0.3 / 1., 0. / 1., 0. / 1., 1.),
+      Rgba::from_straight(0.205 / 0.3 / 1., 0. / 1., 0. / 1., 1.),
     );
   }
 
   #[test]
   fn test_luminosity_semi_transparent_over_semi_transparent() {
-    let bg = Rgba::new(1., 0., 0., 0.5);
-    let fg = Rgba::new(0., 0., 1., 0.5);
+    let bg = Rgba::from_straight(1., 0., 0., 0.5);
+    let fg = Rgba::from_straight(0., 0., 1., 0.5);
 
     // SourceOver: Fa = 1; Fb = 1 – αs
     //           : Fa = 1.; Fb = 0.5
@@ -1693,7 +1861,7 @@ mod tests {
     // αo = αs x Fa + αb x Fb = 0.5 x 1. + 0.5 x 0.5 = 0.75
     assert_rgba(
       fg.luminosity(&bg),
-      Rgba::new(0.1025 / 0.3 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
+      Rgba::from_straight(0.1025 / 0.3 / 0.75, 0. / 0.75, 0.25 / 0.75, 0.75),
     );
   }
 }
