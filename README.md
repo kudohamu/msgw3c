@@ -23,7 +23,7 @@ Implement the `Blend` trait for any color type you like.
 use msgw3c::{
     blend::{Blend, BlendMode},
     color::C,
-    porter_duff::PorterDuff,
+    composite::PorterDuff,
 };
 
 // Your color type.
@@ -70,6 +70,39 @@ assert_eq!(result, Rgba { r: 100, g: 200, b: 210, a: 255 });
 // To select a blend mode at runtime, you can use the blend_with function.
 let result = source.blend_with(&backdrop, BlendMode::Overlay, PorterDuff::SourceAtop);
 assert_eq!(result, Rgba { r: 144, g: 167, b: 177, a: 255 });
+```
+
+### Custom blend / composite formulas
+
+You can also use custom blend and composite formulas you like.
+
+```rust
+use msgw3c::{
+    blend::{BlendFormula},
+    color::C,
+    composite::{CompositeFactors, CompositeOperator},
+};
+
+#[derive(Debug, Clone, Copy)]
+struct Subtract;
+
+impl BlendFormula for Subtract {
+  fn apply_k(&self, cb: C, cs: C) -> (f32, f32, f32) {
+    cb.a - cs.a
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct SquaredAlphaOver;
+
+impl CompositeOperator for SquaredAlphaOver {
+  fn fractions(&self, cs_a: f32, _cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(cs_a * cs_a, 1. - cs_a * cs_a)
+  }
+}
+
+// apply original blend / composite formulas
+let result = source.apply_blend_and_composite(&backdrop, Subtract, SquaredAlphaOver);
 ```
 
 ## Blending
