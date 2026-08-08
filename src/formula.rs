@@ -72,22 +72,25 @@ pub(crate) fn sat(r: f32, g: f32, b: f32) -> f32 {
 ///   return C;
 #[inline]
 pub(crate) fn set_sat(r: f32, g: f32, b: f32, s: f32) -> (f32, f32, f32) {
-  let mut rgb = [r, g, b];
-  let mut arr = [(r, 0), (g, 1), (b, 2)];
-  arr.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+  let mut min = (r, 0);
+  let mut mid = (g, 1);
+  let mut max = (b, 2);
 
-  let min_index = arr[0].1;
-  let mid_index = arr[1].1;
-  let max_index = arr[2].1;
-
-  if rgb[max_index] > rgb[min_index] {
-    rgb[mid_index] = ((rgb[mid_index] - rgb[min_index]) * s) / (rgb[max_index] - rgb[min_index]);
-    rgb[max_index] = s;
-  } else {
-    rgb[mid_index] = 0.;
-    rgb[max_index] = 0.;
+  if min.0 > mid.0 {
+    std::mem::swap(&mut min, &mut mid);
   }
-  rgb[min_index] = 0.;
+  if mid.0 > max.0 {
+    std::mem::swap(&mut mid, &mut max);
+  }
+  if min.0 > mid.0 {
+    std::mem::swap(&mut min, &mut mid);
+  }
+
+  let mut rgb = [0.; 3];
+  if max.0 > min.0 {
+    rgb[mid.1] = ((mid.0 - min.0) * s) / (max.0 - min.0);
+    rgb[max.1] = s;
+  }
 
   (rgb[0], rgb[1], rgb[2])
 }

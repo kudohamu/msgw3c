@@ -30,9 +30,10 @@ impl C {
       return C::TRANSPARENT;
     }
 
-    let r = (self.r / self.a).clamp(0., 1.);
-    let g = (self.g / self.a).clamp(0., 1.);
-    let b = (self.b / self.a).clamp(0., 1.);
+    let inv_a = 1. / self.a;
+    let r = (self.r * inv_a).clamp(0., 1.);
+    let g = (self.g * inv_a).clamp(0., 1.);
+    let b = (self.b * inv_a).clamp(0., 1.);
 
     return C::new(r, g, b, self.a);
   }

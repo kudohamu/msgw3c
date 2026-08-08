@@ -583,7 +583,14 @@ pub trait Blend: Sized {
       return Self::from_color(C::new(r, g, b, a));
     }
 
-    self.apply_blend_and_composite(backdrop, mode, op)
+    // These operators do not depend on the source or the blend formula.
+    // Return before converting the source color or evaluating the blend mode.
+    match op {
+      PorterDuff::Clear => Self::from_color(C::TRANSPARENT),
+      PorterDuff::Copy => Self::from_color(self.to_color()),
+      PorterDuff::Destination => Self::from_color(backdrop.to_color()),
+      _ => self.apply_blend_and_composite(backdrop, mode, op),
+    }
   }
 
   /// Perform color blending and compositing using any calculation formula that
