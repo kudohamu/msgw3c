@@ -4,6 +4,10 @@ use crate::{
   porter_duff::{CompositeOperator, PorterDuff},
 };
 
+pub trait BlendFormula {
+  fn apply_k(&self, cb: C, cs: C) -> (f32, f32, f32);
+}
+
 /// Blend modes defined in the following W3C specification.
 /// <https://www.w3.org/TR/compositing-1/#blending>
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -27,7 +31,7 @@ pub enum BlendMode {
   Luminosity,
 }
 
-impl BlendMode {
+impl BlendFormula for BlendMode {
   #[inline]
   fn apply_k(&self, cb: C, cs: C) -> (f32, f32, f32) {
     match self {
@@ -563,12 +567,12 @@ pub trait Blend: Sized {
   /// ```
   #[inline]
   fn blend_with(&self, backdrop: &impl Blend, mode: BlendMode, op: PorterDuff) -> Self {
-    let cb = backdrop.to_color();
-    let cs = self.to_color();
-
     // Since “Normal Blend” and “SourceOver Composite” are a commonly used combination,
     // use the formula optimized for performance.
     if mode == BlendMode::Normal && op == PorterDuff::SourceOver {
+      let cb = backdrop.to_color();
+      let cs = self.to_color();
+
       // Cr = Cs + Cb x (1 - αs)
       // αr = αs + αb x (1 - αs)
       let r = cs.r + cb.r * (1. - cs.a);
@@ -578,6 +582,21 @@ pub trait Blend: Sized {
 
       return Self::from_color(C::new(r, g, b, a));
     }
+
+    self.apply_blend_and_composite(backdrop, mode, op)
+  }
+
+  /// Perform color blending and compositing using any calculation formula that
+  /// implements `BlendFormula` and `CompositeOperator`.
+  #[inline]
+  fn apply_blend_and_composite<F: BlendFormula, Op: CompositeOperator>(
+    &self,
+    backdrop: &impl Blend,
+    f: F,
+    op: Op,
+  ) -> Self {
+    let cb = backdrop.to_color();
+    let cs = self.to_color();
 
     // Blending: Cr = (1 - αb) x Cs + αb x B(Cb, Cs)
     // Compositing: co = αs x Fa x Cr + αb x Fb x Cb
@@ -591,7 +610,7 @@ pub trait Blend: Sized {
     // def: K = αs x αb x B(cb / αb, cs / αs)
     //      K is blending formula for premultiplied alpha
     // co = Fa x (1 - αb) x cs + Fa x K + Fb x cb
-    let (k_r, k_g, k_b) = mode.apply_k(cb, cs);
+    let (k_r, k_g, k_b) = f.apply_k(cb, cs);
 
     let (fa, fb) = op.fractions(cs.a, cb.a);
 

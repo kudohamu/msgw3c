@@ -32,6 +32,7 @@ pub enum PorterDuff {
 impl CompositeOperator for PorterDuff {
   /// Returns the fractional terms Fa and Fb which defined for each operator and
   /// specify the fraction of the shapes that contribute to the final pixel value.
+  #[inline]
   fn fractions(&self, cs_a: f32, cb_a: f32) -> (f32, f32) {
     match self {
       Self::Clear => (0., 0.),
