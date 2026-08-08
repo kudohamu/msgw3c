@@ -173,7 +173,12 @@ impl BlendFormula for BlendMode {
 pub trait Blend: Sized {
   /// Converts the color type [`C`] used internally by the Blend trait to the implemented type
   ///
-  /// ```
+  /// ```rust
+  /// use msgw3c::{
+  ///   blend::{Blend},
+  ///   color::C,
+  /// };
+  ///
   /// // Your color type.
   /// #[derive(Debug, Clone, Copy, PartialEq, Eq)]
   /// struct Rgba {
@@ -193,23 +198,43 @@ pub trait Blend: Sized {
   ///     }
   ///   }
   ///
-  ///   ...
+  ///   # fn to_color(&self) -> C {
+  ///   #   C::new(
+  ///   #     self.r as f32 / 255.,
+  ///   #     self.g as f32 / 255.,
+  ///   #     self.b as f32 / 255.,
+  ///   #     self.a as f32 / 255.,
+  ///   #  )
+  ///   }
   /// }
   /// ```
   fn from_color(c: C) -> Self;
   /// Converts the implemented type to color type [`C`], which the Blend trait uses internally
   ///
-  /// ```
+  /// ```rust
+  /// use msgw3c::{
+  ///   blend::{Blend},
+  ///   color::C,
+  /// };
   /// // Your color type.
   /// #[derive(Debug, Clone, Copy, PartialEq, Eq)]
   /// struct Rgba {
-  ///     r: u8,
-  ///     g: u8,
-  ///     b: u8,
-  ///     a: u8,
-  ///  }
+  ///   r: u8,
+  ///   g: u8,
+  ///   b: u8,
+  ///   a: u8,
+  /// }
   ///
   /// impl Blend for Rgba {
+  ///   # fn from_color(color: C) -> Self {
+  ///   #   Self {
+  ///   #     r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  ///   #     g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  ///   #     b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  ///   #     a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  ///   #   }
+  ///   # }
+  ///
   ///   fn to_color(&self) -> C {
   ///     C::new(
   ///       self.r as f32 / 255.,
@@ -218,8 +243,6 @@ pub trait Blend: Sized {
   ///       self.a as f32 / 255.,
   ///     )
   ///   }
-  ///
-  ///   ...
   /// }
   /// ```
   fn to_color(&self) -> C;
@@ -228,6 +251,41 @@ pub trait Blend: Sized {
   /// Use [`Self::normal_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  ///   # fn from_color(color: C) -> Self {
+  ///   #   let color = color.to_straight_alpha();
+  ///   #
+  ///   #   Self {
+  ///   #     r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  ///   #     g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  ///   #     b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  ///   #     a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  ///   #   }
+  ///   # }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.normal(&backdrop);
   /// ```
   #[inline]
@@ -238,7 +296,42 @@ pub trait Blend: Sized {
   /// `normal` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.normal_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.normal_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn normal_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -249,6 +342,41 @@ pub trait Blend: Sized {
   /// Use [`Self::multiply_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.multiply(&backdrop);
   /// ```
   #[inline]
@@ -259,7 +387,42 @@ pub trait Blend: Sized {
   /// `multiply` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.multiply_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.multiply_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn multiply_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -270,6 +433,41 @@ pub trait Blend: Sized {
   /// Use [`Self::screen_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.screen(&backdrop);
   /// ```
   #[inline]
@@ -280,7 +478,42 @@ pub trait Blend: Sized {
   /// `screen` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.screen_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.screen_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn screen_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -291,6 +524,41 @@ pub trait Blend: Sized {
   /// Use [`Self::overlay_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.overlay(&backdrop);
   /// ```
   #[inline]
@@ -301,7 +569,42 @@ pub trait Blend: Sized {
   /// `overlay` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.overlay_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.overlay_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn overlay_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -312,6 +615,41 @@ pub trait Blend: Sized {
   /// Use [`Self::darken_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.darken(&backdrop);
   /// ```
   #[inline]
@@ -322,7 +660,42 @@ pub trait Blend: Sized {
   /// `darken` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.darken_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.darken_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn darken_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -333,6 +706,41 @@ pub trait Blend: Sized {
   /// Use [`Self::lighten_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.lighten(&backdrop);
   /// ```
   #[inline]
@@ -343,7 +751,42 @@ pub trait Blend: Sized {
   /// `lighten` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.lighten_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.lighten_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn lighten_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -354,6 +797,41 @@ pub trait Blend: Sized {
   /// Use [`Self::color_dodge_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.color_dodge(&backdrop);
   /// ```
   #[inline]
@@ -364,7 +842,42 @@ pub trait Blend: Sized {
   /// `color_dodge` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.color_dodge_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.color_dodge_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn color_dodge_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -375,6 +888,41 @@ pub trait Blend: Sized {
   /// Use [`Self::color_burn_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.color_burn(&backdrop);
   /// ```
   #[inline]
@@ -385,7 +933,42 @@ pub trait Blend: Sized {
   /// `color_burn` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.color_burn_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.color_burn_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn color_burn_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -396,6 +979,41 @@ pub trait Blend: Sized {
   /// Use [`Self::hard_light_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.hard_light(&backdrop);
   /// ```
   #[inline]
@@ -406,7 +1024,42 @@ pub trait Blend: Sized {
   /// `hard_light` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.hard_light_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.hard_light_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn hard_light_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -417,6 +1070,41 @@ pub trait Blend: Sized {
   /// Use [`Self::soft_light_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.soft_light(&backdrop);
   /// ```
   #[inline]
@@ -427,7 +1115,42 @@ pub trait Blend: Sized {
   /// `soft_light` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.soft_light_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.soft_light_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn soft_light_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -438,6 +1161,41 @@ pub trait Blend: Sized {
   /// Use [`Self::difference_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.difference(&backdrop);
   /// ```
   #[inline]
@@ -448,7 +1206,42 @@ pub trait Blend: Sized {
   /// `difference` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.difference_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.difference_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn difference_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -459,6 +1252,41 @@ pub trait Blend: Sized {
   /// Use [`Self::exclusion_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.exclusion(&backdrop);
   /// ```
   #[inline]
@@ -469,7 +1297,42 @@ pub trait Blend: Sized {
   /// `exclusion` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.exclusion_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.exclusion_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn exclusion_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -480,6 +1343,41 @@ pub trait Blend: Sized {
   /// Use [`Self::hue_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.hue(&backdrop);
   /// ```
   #[inline]
@@ -490,7 +1388,42 @@ pub trait Blend: Sized {
   /// `hue` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.hue_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.hue_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn hue_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -501,6 +1434,41 @@ pub trait Blend: Sized {
   /// Use [`Self::saturation_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.saturation(&backdrop);
   /// ```
   #[inline]
@@ -511,7 +1479,42 @@ pub trait Blend: Sized {
   /// `saturation` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.saturation_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.saturation_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn saturation_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -522,6 +1525,41 @@ pub trait Blend: Sized {
   /// Use [`Self::color_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.color(&backdrop);
   /// ```
   #[inline]
@@ -532,7 +1570,42 @@ pub trait Blend: Sized {
   /// `color` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.color_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.color_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn color_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -543,6 +1616,41 @@ pub trait Blend: Sized {
   /// Use [`Self::luminosity_with()`], if you want to blend specifying the Porter-Duff composite operator.
   ///
   /// ```
+  /// # use msgw3c::{blend::Blend, color::C};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
   /// let result = source.luminosity(&backdrop);
   /// ```
   #[inline]
@@ -553,7 +1661,42 @@ pub trait Blend: Sized {
   /// `luminosity` blend function that allows color blending using the Porter-Duff composite operator.
   ///
   /// ```
-  /// let result = source.luminosity_with(&backdrop, PorterDuff::Destination)
+  /// # use msgw3c::{blend::Blend, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.luminosity_with(&backdrop, PorterDuff::Destination);
   /// ```
   #[inline]
   fn luminosity_with(&self, backdrop: &impl Blend, op: PorterDuff) -> Self {
@@ -563,7 +1706,42 @@ pub trait Blend: Sized {
   /// Blend function that allows you to dynamically specify blend mode and composite operator.
   ///
   /// ```
-  /// let result = source.blend_with(&backdrop, BlendMode::Lighten, PorterDuff::SourceAtop)
+  /// # use msgw3c::{blend::{Blend, BlendMode}, color::C, composite::PorterDuff};
+  ///
+  /// # #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  /// # struct Rgba {
+  /// #   r: u8,
+  /// #   g: u8,
+  /// #   b: u8,
+  /// #   a: u8,
+  /// # }
+  ///
+  /// # impl Blend for Rgba {
+  /// #   fn from_color(color: C) -> Self {
+  /// #     let color = color.to_straight_alpha();
+  /// #
+  /// #     Self {
+  /// #       r: (color.r * 255.).clamp(0.0, 255.0) as u8,
+  /// #       g: (color.g * 255.).clamp(0.0, 255.0) as u8,
+  /// #       b: (color.b * 255.).clamp(0.0, 255.0) as u8,
+  /// #       a: (color.a * 255.).clamp(0.0, 255.0) as u8,
+  /// #     }
+  /// #   }
+  ///
+  /// #   fn to_color(&self) -> C {
+  /// #     C::from_straight_alpha(
+  /// #       self.r as f32 / 255.,
+  /// #       self.g as f32 / 255.,
+  /// #       self.b as f32 / 255.,
+  /// #       self.a as f32 / 255.,
+  /// #     )
+  /// #   }
+  /// # }
+  ///
+  /// # let backdrop = Rgba { r: 100, g: 200, b: 210, a: 255 };
+  /// # let source = Rgba { r: 200, g: 30, b: 10, a: 200 };
+  ///
+  /// let result = source.blend_with(&backdrop, BlendMode::Lighten, PorterDuff::SourceAtop);
   /// ```
   #[inline]
   fn blend_with(&self, backdrop: &impl Blend, mode: BlendMode, op: PorterDuff) -> Self {
