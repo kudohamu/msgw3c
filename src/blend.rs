@@ -1,7 +1,7 @@
 use crate::{
   color::C,
+  composite::{CompositeOperator, PorterDuff},
   formula,
-  porter_duff::{CompositeOperator, PorterDuff},
 };
 
 pub trait BlendFormula {
@@ -612,15 +612,15 @@ pub trait Blend: Sized {
     // co = Fa x (1 - αb) x cs + Fa x K + Fb x cb
     let (k_r, k_g, k_b) = f.apply_k(cb, cs);
 
-    let (fa, fb) = op.fractions(cs.a, cb.a);
+    let factors = op.fractions(cs.a, cb.a);
 
     // αo = αs x Fa + αb x Fb
-    let a0 = cs.a * fa + cb.a * fb;
+    let a0 = cs.a * factors.fa + cb.a * factors.fb;
     let inv_b_a = 1. - cb.a;
 
-    let co_r = fa * inv_b_a * cs.r + fa * k_r + fb * cb.r;
-    let co_g = fa * inv_b_a * cs.g + fa * k_g + fb * cb.g;
-    let co_b = fa * inv_b_a * cs.b + fa * k_b + fb * cb.b;
+    let co_r = factors.fa * inv_b_a * cs.r + factors.fa * k_r + factors.fb * cb.r;
+    let co_g = factors.fa * inv_b_a * cs.g + factors.fa * k_g + factors.fb * cb.g;
+    let co_b = factors.fa * inv_b_a * cs.b + factors.fa * k_b + factors.fb * cb.b;
 
     Self::from_color(C::new(co_r, co_g, co_b, a0))
   }
