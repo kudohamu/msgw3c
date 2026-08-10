@@ -17,14 +17,17 @@ impl C {
     a: 0.0,
   };
 
+  #[inline]
   pub fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
     C { r, g, b, a }
   }
 
+  #[inline]
   pub fn from_straight_alpha(r: f32, g: f32, b: f32, a: f32) -> Self {
     Self::new(r * a, g * a, b * a, a)
   }
 
+  #[inline]
   pub fn to_straight_alpha(&self) -> Self {
     if self.a == 0. {
       return C::TRANSPARENT;

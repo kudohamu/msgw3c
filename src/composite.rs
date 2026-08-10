@@ -8,6 +8,7 @@ pub struct CompositeFactors {
 }
 
 impl CompositeFactors {
+  #[inline]
   pub fn new(fa: f32, fb: f32) -> Self {
     Self { fa, fb }
   }
@@ -50,19 +51,149 @@ impl CompositeOperator for PorterDuff {
   #[inline]
   fn fractions(&self, cs_a: f32, cb_a: f32) -> CompositeFactors {
     match self {
-      Self::Clear => CompositeFactors::new(0., 0.),
-      Self::Copy => CompositeFactors::new(1., 0.),
-      Self::Destination => CompositeFactors::new(0., 1.),
-      Self::SourceOver => CompositeFactors::new(1., 1. - cs_a),
-      Self::DestinationOver => CompositeFactors::new(1. - cb_a, 1.),
-      Self::SourceIn => CompositeFactors::new(cb_a, 0.),
-      Self::DestinationIn => CompositeFactors::new(0., cs_a),
-      Self::SourceOut => CompositeFactors::new(1. - cb_a, 0.),
-      Self::DestinationOut => CompositeFactors::new(0., 1. - cs_a),
-      Self::SourceAtop => CompositeFactors::new(cb_a, 1. - cs_a),
-      Self::DestinationAtop => CompositeFactors::new(1. - cb_a, cs_a),
-      Self::Xor => CompositeFactors::new(1. - cb_a, 1. - cs_a),
-      Self::Lighter => CompositeFactors::new(1., 1.),
+      Self::Clear => ClearOperator.fractions(cs_a, cb_a),
+      Self::Copy => CopyOperator.fractions(cs_a, cb_a),
+      Self::Destination => DestinationOperator.fractions(cs_a, cb_a),
+      Self::SourceOver => SourceOverOperator.fractions(cs_a, cb_a),
+      Self::DestinationOver => DestinationOverOperator.fractions(cs_a, cb_a),
+      Self::SourceIn => SourceInOperator.fractions(cs_a, cb_a),
+      Self::DestinationIn => DestinationInOperator.fractions(cs_a, cb_a),
+      Self::SourceOut => SourceOutOperator.fractions(cs_a, cb_a),
+      Self::DestinationOut => DestinationOutOperator.fractions(cs_a, cb_a),
+      Self::SourceAtop => SourceAtopOperator.fractions(cs_a, cb_a),
+      Self::DestinationAtop => DestinationAtopOperator.fractions(cs_a, cb_a),
+      Self::Xor => XorOperator.fractions(cs_a, cb_a),
+      Self::Lighter => LighterOperator.fractions(cs_a, cb_a),
     }
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct ClearOperator;
+
+impl CompositeOperator for ClearOperator {
+  #[inline]
+  fn fractions(&self, _cs_a: f32, _cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(0., 0.)
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct CopyOperator;
+
+impl CompositeOperator for CopyOperator {
+  #[inline]
+  fn fractions(&self, _cs_a: f32, _cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(1., 0.)
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct DestinationOperator;
+
+impl CompositeOperator for DestinationOperator {
+  #[inline]
+  fn fractions(&self, _cs_a: f32, _cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(0., 1.)
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct SourceOverOperator;
+
+impl CompositeOperator for SourceOverOperator {
+  #[inline]
+  fn fractions(&self, cs_a: f32, _cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(1., 1. - cs_a)
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct DestinationOverOperator;
+
+impl CompositeOperator for DestinationOverOperator {
+  #[inline]
+  fn fractions(&self, _cs_a: f32, cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(1. - cb_a, 1.)
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct SourceInOperator;
+
+impl CompositeOperator for SourceInOperator {
+  #[inline]
+  fn fractions(&self, _cs_a: f32, cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(cb_a, 0.)
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct DestinationInOperator;
+
+impl CompositeOperator for DestinationInOperator {
+  #[inline]
+  fn fractions(&self, cs_a: f32, _cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(0., cs_a)
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct SourceOutOperator;
+
+impl CompositeOperator for SourceOutOperator {
+  #[inline]
+  fn fractions(&self, _cs_a: f32, cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(1. - cb_a, 0.)
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct DestinationOutOperator;
+
+impl CompositeOperator for DestinationOutOperator {
+  #[inline]
+  fn fractions(&self, cs_a: f32, _cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(0., 1. - cs_a)
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct SourceAtopOperator;
+
+impl CompositeOperator for SourceAtopOperator {
+  #[inline]
+  fn fractions(&self, cs_a: f32, cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(cb_a, 1. - cs_a)
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct DestinationAtopOperator;
+
+impl CompositeOperator for DestinationAtopOperator {
+  #[inline]
+  fn fractions(&self, cs_a: f32, cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(1. - cb_a, cs_a)
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct XorOperator;
+
+impl CompositeOperator for XorOperator {
+  #[inline]
+  fn fractions(&self, cs_a: f32, cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(1. - cb_a, 1. - cs_a)
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct LighterOperator;
+
+impl CompositeOperator for LighterOperator {
+  #[inline]
+  fn fractions(&self, _cs_a: f32, _cb_a: f32) -> CompositeFactors {
+    CompositeFactors::new(1., 1.)
   }
 }

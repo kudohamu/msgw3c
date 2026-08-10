@@ -21,7 +21,8 @@ Implement the `Blend` trait for any color type you like.
 
 ```rust
 use msgw3c::{
-  blend::{Blend, BlendMode},
+  Blend,
+  blend::BlendMode,
   color::C,
   composite::PorterDuff,
 };
@@ -96,7 +97,7 @@ You can also use custom blend and composite formulas you like.
 
 ```rust,ignore
 use msgw3c::{
-    blend::{BlendFormula},
+    blend::BlendFormula,
     color::C,
     composite::{CompositeFactors, CompositeOperator},
 };
