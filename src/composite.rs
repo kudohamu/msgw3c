@@ -68,6 +68,26 @@ impl CompositeOperator for PorterDuff {
   }
 }
 
+impl std::fmt::Display for PorterDuff {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::Clear => write!(f, "clear"),
+      Self::Copy => write!(f, "copy"),
+      Self::Destination => write!(f, "destination"),
+      Self::SourceOver => write!(f, "source_over"),
+      Self::DestinationOver => write!(f, "destination_over"),
+      Self::SourceIn => write!(f, "source_in"),
+      Self::DestinationIn => write!(f, "destination_in"),
+      Self::SourceOut => write!(f, "source_out"),
+      Self::DestinationOut => write!(f, "destination_out"),
+      Self::SourceAtop => write!(f, "source_atop"),
+      Self::DestinationAtop => write!(f, "destination_atop"),
+      Self::Xor => write!(f, "xor"),
+      Self::Lighter => write!(f, "lighter"),
+    }
+  }
+}
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct ClearOperator;
 

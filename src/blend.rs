@@ -27,6 +27,29 @@ pub enum BlendMode {
   Luminosity,
 }
 
+impl std::fmt::Display for BlendMode {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::Normal => write!(f, "normal"),
+      Self::Multiply => write!(f, "multiply"),
+      Self::Screen => write!(f, "screen"),
+      Self::Overlay => write!(f, "overlay"),
+      Self::Darken => write!(f, "darken"),
+      Self::Lighten => write!(f, "lighten"),
+      Self::ColorDodge => write!(f, "color_dodge"),
+      Self::ColorBurn => write!(f, "color_burn"),
+      Self::HardLight => write!(f, "hard_light"),
+      Self::SoftLight => write!(f, "soft_light"),
+      Self::Difference => write!(f, "difference"),
+      Self::Exclusion => write!(f, "exclusion"),
+      Self::Hue => write!(f, "hue"),
+      Self::Saturation => write!(f, "saturation"),
+      Self::Color => write!(f, "color"),
+      Self::Luminosity => write!(f, "luminosity"),
+    }
+  }
+}
+
 impl BlendFormula for BlendMode {
   #[inline]
   fn apply_k(&self, cb: C, cs: C) -> (f32, f32, f32) {
