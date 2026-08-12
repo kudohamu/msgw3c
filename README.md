@@ -8,6 +8,7 @@ You don't need to substitute with dedicated types. Simply implement the `Blend` 
 - 16 blend modes
 - 13 Porter-Duff compositing methods
 - Support for custom blend and composite formulas
+- Batch processing functions
 - No dependency
 
 ## Usage
