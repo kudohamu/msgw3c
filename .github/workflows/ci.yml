@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RUSTUP_TOOLCHAIN: 1.94.0
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust toolchain
+        run: rustup toolchain install 1.94.0 --profile minimal --component clippy,rustfmt
+
+      - parallel:
+          - name: Check formatting
+            run: cargo fmt --all -- --check
+
+          - name: Run Clippy
+            run: cargo clippy --all-targets --all-features --locked -- -D warnings
+
+          - name: Run tests
+            run: cargo test --all-features --locked
+
+          - name: Build documentation
+            env:
+              RUSTDOCFLAGS: -D warnings
+            run: cargo doc --no-deps --all-features --locked
