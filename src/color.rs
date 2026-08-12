@@ -38,6 +38,6 @@ impl C {
     let g = (self.g * inv_a).clamp(0., 1.);
     let b = (self.b * inv_a).clamp(0., 1.);
 
-    return C::new(r, g, b, self.a);
+    C::new(r, g, b, self.a)
   }
 }

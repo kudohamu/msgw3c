@@ -1,7 +1,3 @@
-use std::hint::black_box;
-use std::time::Duration;
-use std::write;
-
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use msgw3c::batch_blend_with;
 use msgw3c::blend::BlendMode;
@@ -9,6 +5,8 @@ use msgw3c::composite::PorterDuff;
 use msgw3c::{Blend, color::C};
 use rand::rngs::StdRng;
 use rand::{RngExt, SeedableRng};
+use std::hint::black_box;
+use std::time::Duration;
 
 #[derive(Debug, Clone, Copy)]
 struct Pixel(C);
@@ -35,7 +33,9 @@ struct BlendAndComposite<'a> {
 
 impl std::fmt::Display for BlendAndComposite<'_> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{} / {}", self.mode, self.op)
+    write!(f, "{} / {}", self.mode, self.op)?;
+
+    Ok(())
   }
 }
 
