@@ -174,6 +174,31 @@ let custom_operator_blended = batch_multiply_with(&sources, &backdrops, &mut tar
 let runtime_blend_mode_and_operator_blended = batch_blend_with(&sources, &backdrops, &mut target, BlendMode::Screen, PorterDuff::SourceIn);
 ```
 
+## Performance
+
+The batch benchmark processes a 1920 × 1080 image in a single thread.
+
+| Blend mode | Single pixel | 1080p batch |
+|---|---:|---:|
+| Normal | 1.014 ns | 1.010 ms |
+| Multiply | 1.909 ns | 1.317 ms |
+| Screen | 2.086 ns | 1.676 ms |
+| Overlay | 2.193 ns | 2.135 ms |
+| Darken | 1.946 ns | 1.490 ms |
+| Lighten | 1.882 ns | 1.491 ms |
+| ColorDodge | 2.750 ns | 2.177 ms |
+| ColorBurn | 3.347 ns | 2.658 ms |
+| HardLight | 2.366 ns | 2.127 ms |
+| SoftLight | 4.532 ns | 27.731 ms |
+| Difference | 1.878 ns | 1.491 ms |
+| Exclusion | 2.076 ns | 1.775 ms |
+| Hue | 6.019 ns | 26.694 ms |
+| Saturation | 6.249 ns | 32.278 ms |
+| Color | 4.375 ns | 18.100 ms |
+| Luminosity | 4.552 ns | 18.063 ms |
+
+These results use the `SourceOver` compositing operator. See the [detailed benchmark results](docs/benchmark.md) for all blend mode and Porter-Duff operator combinations and complete measurement conditions.
+
 ## Blending
 
 The `BlendMode` and its corresponding methods are as follows.
