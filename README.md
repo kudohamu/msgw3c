@@ -124,6 +124,56 @@ impl CompositeOperator for SquaredAlphaOver {
 let result = source.apply_blend_and_composite(&backdrop, Subtract, SquaredAlphaOver);
 ```
 
+### batch blending
+
+```rust
+use msgw3c::{
+  batch_normal,
+  batch_multiply_with,
+  batch_blend_with,
+  blend::BlendMode,
+  Blend,
+  color::C,
+  composite::PorterDuff,
+};
+
+// Your color type.
+#[derive(Debug, Clone, Copy)]
+struct Rgba {
+  r: f32,
+  g: f32,
+  b: f32,
+  a: f32,
+}
+
+impl Rgba {
+  const TRANSPARENT: Self = Self { r: 0., g: 0., b: 0., a: 0. };
+}
+
+impl Blend for Rgba {
+  fn from_color(color: C) -> Self {
+    Self {
+      r: color.r,
+      g: color.g,
+      b: color.b,
+      a: color.a,
+    }
+  }
+
+  fn to_color(&self) -> C {
+    C::new(self.r, self.g, self.b, self.a)
+  }
+}
+
+let backdrops = vec![Rgba { r: 0.1, g: 0.2, b: 0.25, a: 1.0 }, Rgba { r: 0.3, g: 0.22, b: 0.2, a: 0.8 }, Rgba { r: 0.6, g: 0.8, b: 1.0, a: 0.5 }];
+let sources = vec![Rgba { r: 0.9, g: 0.3, b: 0.1, a: 0.2 }, Rgba { r: 0.45, g: 0.12, b: 0.66, a: 0.8 }, Rgba { r: 0.0, g: 0.0, b: 0.0, a: 0. }];
+let mut target = vec![Rgba::TRANSPARENT; 3];
+
+let batch_blended = batch_normal(&sources, &backdrops, &mut target);
+let custom_operator_blended = batch_multiply_with(&sources, &backdrops, &mut target, PorterDuff::SourceIn);
+let runtime_blend_mode_and_operator_blended = batch_blend_with(&sources, &backdrops, &mut target, BlendMode::Screen, PorterDuff::SourceIn);
+```
+
 ## Blending
 
 The `BlendMode` and its corresponding methods are as follows.
