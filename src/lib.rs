@@ -1700,6 +1700,39 @@ where
   Ok(())
 }
 
+/// Blends batches of colors in place using the `normal` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_normal_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_normal_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  check_colors_len_in_place(sources, backdrops)?;
+
+  for (backdrop, source) in backdrops.iter_mut().zip(sources) {
+    let cs = source.to_color();
+    let cb = backdrop.to_color();
+
+    // Since “Normal Blend” and “SourceOver Composite” are a commonly used combination,
+    // use the formula optimized for performance.
+
+    // Cr = Cs + Cb x (1 - αs)
+    // αr = αs + αb x (1 - αs)
+    let inv_a = 1.0 - cs.a;
+    let co_r = cs.r + cb.r * inv_a;
+    let co_g = cs.g + cb.g * inv_a;
+    let co_b = cs.b + cb.b * inv_a;
+    let co_a = cs.a + cb.a * inv_a;
+
+    *backdrop = B::from_color(C::new(co_r, co_g, co_b, co_a));
+  }
+
+  Ok(())
+}
+
 /// Blends batches of colors using the `normal` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_normal_with<S, B>(
@@ -1717,6 +1750,26 @@ where
   }
 
   batch_apply_blend_with(sources, backdrops, target, NormalFormula, op)
+}
+
+/// Blends batches of colors in place using the `normal` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_normal_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  if op == PorterDuff::SourceOver {
+    return batch_normal_in_place(sources, backdrops);
+  }
+
+  batch_apply_blend_with_in_place(sources, backdrops, NormalFormula, op)
 }
 
 /// Blends batches of colors using the `multiply` blend mode and `SourceOver` compositing.
@@ -1737,6 +1790,19 @@ where
   )
 }
 
+/// Blends batches of colors in place using the `multiply` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_multiply_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_multiply_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(sources, backdrops, MultiplyFormula, SourceOverOperator)
+}
+
 /// Blends batches of colors using the `multiply` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_multiply_with<S, B>(
@@ -1750,6 +1816,22 @@ where
   B: Blend,
 {
   batch_apply_blend_with(sources, backdrops, target, MultiplyFormula, op)
+}
+
+/// Blends batches of colors in place using the `multiply` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_multiply_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, MultiplyFormula, op)
 }
 
 /// Blends batches of colors using the `screen` blend mode and `SourceOver` compositing.
@@ -1770,6 +1852,19 @@ where
   )
 }
 
+/// Blends batches of colors in place using the `screen` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_screen_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_screen_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(sources, backdrops, ScreenFormula, SourceOverOperator)
+}
+
 /// Blends batches of colors using the `screen` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_screen_with<S, B>(
@@ -1783,6 +1878,22 @@ where
   B: Blend,
 {
   batch_apply_blend_with(sources, backdrops, target, ScreenFormula, op)
+}
+
+/// Blends batches of colors in place using the `screen` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_screen_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, ScreenFormula, op)
 }
 
 /// Blends batches of colors using the `overlay` blend mode and `SourceOver` compositing.
@@ -1803,6 +1914,19 @@ where
   )
 }
 
+/// Blends batches of colors in place using the `overlay` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_overlay_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_overlay_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(sources, backdrops, OverlayFormula, SourceOverOperator)
+}
+
 /// Blends batches of colors using the `overlay` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_overlay_with<S, B>(
@@ -1816,6 +1940,22 @@ where
   B: Blend,
 {
   batch_apply_blend_with(sources, backdrops, target, OverlayFormula, op)
+}
+
+/// Blends batches of colors in place using the `overlay` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_overlay_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, OverlayFormula, op)
 }
 
 /// Blends batches of colors using the `darken` blend mode and `SourceOver` compositing.
@@ -1836,6 +1976,19 @@ where
   )
 }
 
+/// Blends batches of colors in place using the `darken` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_darken_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_darken_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(sources, backdrops, DarkenFormula, SourceOverOperator)
+}
+
 /// Blends batches of colors using the `darken` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_darken_with<S, B>(
@@ -1849,6 +2002,22 @@ where
   B: Blend,
 {
   batch_apply_blend_with(sources, backdrops, target, DarkenFormula, op)
+}
+
+/// Blends batches of colors in place using the `darken` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_darken_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, DarkenFormula, op)
 }
 
 /// Blends batches of colors using the `lighten` blend mode and `SourceOver` compositing.
@@ -1869,6 +2038,19 @@ where
   )
 }
 
+/// Blends batches of colors in place using the `lighten` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_lighten_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_lighten_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(sources, backdrops, LightenFormula, SourceOverOperator)
+}
+
 /// Blends batches of colors using the `lighten` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_lighten_with<S, B>(
@@ -1882,6 +2064,22 @@ where
   B: Blend,
 {
   batch_apply_blend_with(sources, backdrops, target, LightenFormula, op)
+}
+
+/// Blends batches of colors in place using the `lighten` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_lighten_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, LightenFormula, op)
 }
 
 /// Blends batches of colors using the `color-dodge` blend mode and `SourceOver` compositing.
@@ -1906,6 +2104,24 @@ where
   )
 }
 
+/// Blends batches of colors in place using the `color-dodge` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_color_dodge_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_color_dodge_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(
+    sources,
+    backdrops,
+    ColorDodgeFormula,
+    SourceOverOperator,
+  )
+}
+
 /// Blends batches of colors using the `color-dodge` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_color_dodge_with<S, B>(
@@ -1919,6 +2135,22 @@ where
   B: Blend,
 {
   batch_apply_blend_with(sources, backdrops, target, ColorDodgeFormula, op)
+}
+
+/// Blends batches of colors in place using the `color-dodge` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_color_dodge_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, ColorDodgeFormula, op)
 }
 
 /// Blends batches of colors using the `color-burn` blend mode and `SourceOver` compositing.
@@ -1939,6 +2171,19 @@ where
   )
 }
 
+/// Blends batches of colors in place using the `color-burn` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_color_burn_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_color_burn_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(sources, backdrops, ColorBurnFormula, SourceOverOperator)
+}
+
 /// Blends batches of colors using the `color-burn` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_color_burn_with<S, B>(
@@ -1952,6 +2197,22 @@ where
   B: Blend,
 {
   batch_apply_blend_with(sources, backdrops, target, ColorBurnFormula, op)
+}
+
+/// Blends batches of colors in place using the `color-burn` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_color_burn_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, ColorBurnFormula, op)
 }
 
 /// Blends batches of colors using the `hard-light` blend mode and `SourceOver` compositing.
@@ -1972,6 +2233,19 @@ where
   )
 }
 
+/// Blends batches of colors in place using the `hard-light` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_hard_light_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_hard_light_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(sources, backdrops, HardLightFormula, SourceOverOperator)
+}
+
 /// Blends batches of colors using the `hard-light` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_hard_light_with<S, B>(
@@ -1985,6 +2259,22 @@ where
   B: Blend,
 {
   batch_apply_blend_with(sources, backdrops, target, HardLightFormula, op)
+}
+
+/// Blends batches of colors in place using the `hard-light` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_hard_light_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, HardLightFormula, op)
 }
 
 /// Blends batches of colors using the `soft-light` blend mode and `SourceOver` compositing.
@@ -2005,6 +2295,19 @@ where
   )
 }
 
+/// Blends batches of colors in place using the `soft-light` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_soft_light_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_soft_light_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(sources, backdrops, SoftLightFormula, SourceOverOperator)
+}
+
 /// Blends batches of colors using the `soft-light` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_soft_light_with<S, B>(
@@ -2018,6 +2321,22 @@ where
   B: Blend,
 {
   batch_apply_blend_with(sources, backdrops, target, SoftLightFormula, op)
+}
+
+/// Blends batches of colors in place using the `soft-light` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_soft_light_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, SoftLightFormula, op)
 }
 
 /// Blends batches of colors using the `difference` blend mode and `SourceOver` compositing.
@@ -2038,6 +2357,24 @@ where
   )
 }
 
+/// Blends batches of colors in place using the `difference` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_difference_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_difference_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(
+    sources,
+    backdrops,
+    DifferenceFormula,
+    SourceOverOperator,
+  )
+}
+
 /// Blends batches of colors using the `difference` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_difference_with<S, B>(
@@ -2051,6 +2388,22 @@ where
   B: Blend,
 {
   batch_apply_blend_with(sources, backdrops, target, DifferenceFormula, op)
+}
+
+/// Blends batches of colors in place using the `difference` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_difference_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, DifferenceFormula, op)
 }
 
 /// Blends batches of colors using the `exclusion` blend mode and `SourceOver` compositing.
@@ -2071,6 +2424,19 @@ where
   )
 }
 
+/// Blends batches of colors in place using the `exclusion` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_exclusion_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_exclusion_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(sources, backdrops, ExclusionFormula, SourceOverOperator)
+}
+
 /// Blends batches of colors using the `exclusion` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_exclusion_with<S, B>(
@@ -2086,6 +2452,22 @@ where
   batch_apply_blend_with(sources, backdrops, target, ExclusionFormula, op)
 }
 
+/// Blends batches of colors in place using the `exclusion` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_exclusion_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, ExclusionFormula, op)
+}
+
 /// Blends batches of colors using the `hue` blend mode and `SourceOver` compositing.
 ///
 /// Use [`batch_hue_with()`] to specify a different Porter-Duff compositing operator.
@@ -2096,6 +2478,19 @@ where
   B: Blend,
 {
   batch_apply_blend_and_composite(sources, backdrops, target, HueFormula, SourceOverOperator)
+}
+
+/// Blends batches of colors in place using the `hue` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_hue_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_hue_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(sources, backdrops, HueFormula, SourceOverOperator)
 }
 
 /// Blends batches of colors using the `hue` blend mode and the specified Porter-Duff compositing operator.
@@ -2111,6 +2506,22 @@ where
   B: Blend,
 {
   batch_apply_blend_with(sources, backdrops, target, HueFormula, op)
+}
+
+/// Blends batches of colors in place using the `hue` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_hue_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, HueFormula, op)
 }
 
 /// Blends batches of colors using the `saturation` blend mode and `SourceOver` compositing.
@@ -2131,6 +2542,24 @@ where
   )
 }
 
+/// Blends batches of colors in place using the `saturation` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_saturation_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_saturation_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(
+    sources,
+    backdrops,
+    SaturationFormula,
+    SourceOverOperator,
+  )
+}
+
 /// Blends batches of colors using the `saturation` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_saturation_with<S, B>(
@@ -2146,6 +2575,22 @@ where
   batch_apply_blend_with(sources, backdrops, target, SaturationFormula, op)
 }
 
+/// Blends batches of colors in place using the `saturation` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_saturation_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, SaturationFormula, op)
+}
+
 /// Blends batches of colors using the `color` blend mode and `SourceOver` compositing.
 ///
 /// Use [`batch_color_with()`] to specify a different Porter-Duff compositing operator.
@@ -2156,6 +2601,19 @@ where
   B: Blend,
 {
   batch_apply_blend_and_composite(sources, backdrops, target, ColorFormula, SourceOverOperator)
+}
+
+/// Blends batches of colors in place using the `color` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_color_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_color_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(sources, backdrops, ColorFormula, SourceOverOperator)
 }
 
 /// Blends batches of colors using the `color` blend mode and the specified Porter-Duff compositing operator.
@@ -2171,6 +2629,22 @@ where
   B: Blend,
 {
   batch_apply_blend_with(sources, backdrops, target, ColorFormula, op)
+}
+
+/// Blends batches of colors in place using the `color` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_color_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, ColorFormula, op)
 }
 
 /// Blends batches of colors using the `luminosity` blend mode and `SourceOver` compositing.
@@ -2191,6 +2665,24 @@ where
   )
 }
 
+/// Blends batches of colors in place using the `luminosity` blend mode and `SourceOver` compositing.
+///
+/// The results are stored in `backdrops`.
+/// Use [`batch_luminosity_with_in_place()`] to specify a different Porter-Duff compositing operator.
+#[inline]
+pub fn batch_luminosity_in_place<S, B>(sources: &[S], backdrops: &mut [B]) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_and_composite_in_place(
+    sources,
+    backdrops,
+    LuminosityFormula,
+    SourceOverOperator,
+  )
+}
+
 /// Blends batches of colors using the `luminosity` blend mode and the specified Porter-Duff compositing operator.
 #[inline]
 pub fn batch_luminosity_with<S, B>(
@@ -2204,6 +2696,22 @@ where
   B: Blend,
 {
   batch_apply_blend_with(sources, backdrops, target, LuminosityFormula, op)
+}
+
+/// Blends batches of colors in place using the `luminosity` blend mode and the specified Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_luminosity_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  batch_apply_blend_with_in_place(sources, backdrops, LuminosityFormula, op)
 }
 
 /// Blends batches of colors using the specified blend mode and Porter-Duff compositing operator.
@@ -2239,6 +2747,40 @@ where
   }
 }
 
+/// Blends batches of colors in place using the specified blend mode and Porter-Duff compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_blend_with_in_place<S, B>(
+  sources: &[S],
+  backdrops: &mut [B],
+  mode: BlendMode,
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  match mode {
+    BlendMode::Normal => batch_normal_with_in_place(sources, backdrops, op),
+    BlendMode::Multiply => batch_multiply_with_in_place(sources, backdrops, op),
+    BlendMode::Screen => batch_screen_with_in_place(sources, backdrops, op),
+    BlendMode::Overlay => batch_overlay_with_in_place(sources, backdrops, op),
+    BlendMode::Darken => batch_darken_with_in_place(sources, backdrops, op),
+    BlendMode::Lighten => batch_lighten_with_in_place(sources, backdrops, op),
+    BlendMode::ColorDodge => batch_color_dodge_with_in_place(sources, backdrops, op),
+    BlendMode::ColorBurn => batch_color_burn_with_in_place(sources, backdrops, op),
+    BlendMode::HardLight => batch_hard_light_with_in_place(sources, backdrops, op),
+    BlendMode::SoftLight => batch_soft_light_with_in_place(sources, backdrops, op),
+    BlendMode::Difference => batch_difference_with_in_place(sources, backdrops, op),
+    BlendMode::Exclusion => batch_exclusion_with_in_place(sources, backdrops, op),
+    BlendMode::Hue => batch_hue_with_in_place(sources, backdrops, op),
+    BlendMode::Saturation => batch_saturation_with_in_place(sources, backdrops, op),
+    BlendMode::Color => batch_color_with_in_place(sources, backdrops, op),
+    BlendMode::Luminosity => batch_luminosity_with_in_place(sources, backdrops, op),
+  }
+}
+
 /// Blends batches of colors using the specified blend formula and compositing operator.
 #[inline]
 pub fn batch_apply_blend_and_composite<S, B, F, Op>(
@@ -2262,6 +2804,36 @@ where
 
   for ((target, source), backdrop) in target.iter_mut().zip(sources).zip(backdrops) {
     *target = S::from_color(apply_blend_and_composite(
+      source.to_color(),
+      backdrop.to_color(),
+      &f,
+      &op,
+    ));
+  }
+
+  Ok(())
+}
+
+/// Blends batches of colors in place using the specified blend formula and compositing operator.
+///
+/// The results are stored in `backdrops`.
+#[inline]
+pub fn batch_apply_blend_and_composite_in_place<S, B, F, Op>(
+  sources: &[S],
+  backdrops: &mut [B],
+  f: F,
+  op: Op,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+  F: BlendFormula,
+  Op: CompositeOperator,
+{
+  check_colors_len_in_place(sources, backdrops)?;
+
+  for (backdrop, source) in backdrops.iter_mut().zip(sources) {
+    *backdrop = B::from_color(apply_blend_and_composite(
       source.to_color(),
       backdrop.to_color(),
       &f,
@@ -2386,6 +2958,63 @@ where
 }
 
 #[inline]
+fn batch_apply_blend_with_in_place<S, B, F: BlendFormula>(
+  sources: &[S],
+  backdrops: &mut [B],
+  f: F,
+  op: PorterDuff,
+) -> Result<(), Error>
+where
+  S: Blend,
+  B: Blend,
+{
+  match op {
+    PorterDuff::Clear => {
+      check_colors_len_in_place(sources, backdrops)?;
+      backdrops.fill(B::from_color(C::TRANSPARENT));
+      Ok(())
+    }
+    PorterDuff::Destination => check_colors_len_in_place(sources, backdrops),
+    PorterDuff::Copy => {
+      check_colors_len_in_place(sources, backdrops)?;
+
+      for (backdrop, source) in backdrops.iter_mut().zip(sources) {
+        *backdrop = B::from_color(source.to_color());
+      }
+      Ok(())
+    }
+    PorterDuff::SourceOver => {
+      batch_apply_blend_and_composite_in_place(sources, backdrops, f, SourceOverOperator)
+    }
+    PorterDuff::DestinationOver => {
+      batch_apply_blend_and_composite_in_place(sources, backdrops, f, DestinationOverOperator)
+    }
+    PorterDuff::SourceIn => {
+      batch_apply_blend_and_composite_in_place(sources, backdrops, f, SourceInOperator)
+    }
+    PorterDuff::DestinationIn => {
+      batch_apply_blend_and_composite_in_place(sources, backdrops, f, DestinationInOperator)
+    }
+    PorterDuff::SourceOut => {
+      batch_apply_blend_and_composite_in_place(sources, backdrops, f, SourceOutOperator)
+    }
+    PorterDuff::DestinationOut => {
+      batch_apply_blend_and_composite_in_place(sources, backdrops, f, DestinationOutOperator)
+    }
+    PorterDuff::SourceAtop => {
+      batch_apply_blend_and_composite_in_place(sources, backdrops, f, SourceAtopOperator)
+    }
+    PorterDuff::DestinationAtop => {
+      batch_apply_blend_and_composite_in_place(sources, backdrops, f, DestinationAtopOperator)
+    }
+    PorterDuff::Xor => batch_apply_blend_and_composite_in_place(sources, backdrops, f, XorOperator),
+    PorterDuff::Lighter => {
+      batch_apply_blend_and_composite_in_place(sources, backdrops, f, LighterOperator)
+    }
+  }
+}
+
+#[inline]
 fn check_colors_len<S: Blend, B: Blend>(
   sources: &[S],
   backdrops: &[B],
@@ -2399,6 +3028,24 @@ fn check_colors_len<S: Blend, B: Blend>(
       source: sources_len,
       backdrop: backdrops_len,
       target: target_len,
+    });
+  }
+
+  Ok(())
+}
+
+#[inline]
+fn check_colors_len_in_place<S: Blend, B: Blend>(
+  sources: &[S],
+  backdrops: &[B],
+) -> Result<(), Error> {
+  let sources_len = sources.len();
+  let backdrops_len = backdrops.len();
+  if sources_len < backdrops_len {
+    return Err(Error::LengthMismatch {
+      source: sources_len,
+      backdrop: backdrops_len,
+      target: backdrops_len,
     });
   }
 
