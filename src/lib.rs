@@ -3570,6 +3570,32 @@ mod tests {
   }
 
   #[test]
+  fn test_color_dodge_opaque_midtones_over_opaque_midtones() {
+    let bg = Rgba::from_straight(0.38, 0.78, 0.3, 1.);
+    let fg = Rgba::from_straight(0.6, 0.15, 0.2, 1.);
+
+    // SourceOver: Fa = 1; Fb = 1 – αs
+    //           : Fa = 1.; Fb = 0.
+    // color_dodge: if(Cb == 0)
+    //                B(Cb, Cs) = 0
+    //              else if(Cs == 1)
+    //                B(Cb, Cs) = 1
+    //              else
+    //                B(Cb, Cs) = min(1, Cb / (1 - Cs))
+    //              = r: min(1., 0.38 / (1. - 0.6)) = 0.95
+    //              = g: min(1., 0.78 / (1. - 0.15)) = 0.91764706
+    //              = b: min(1., 0.3 / (1. - 0.2)) = 0.375
+    //              = (0.95, 0.91764706, 0.375)
+    // Cr = (1 - αb) x Cs + αb x B(Cb, Cs) = (1. - 1.) x (0.6, 0.15, 0.2) + 1. x (0.95, 0.91764706, 0.375) = (0.95, 0.91764706, 0.375)
+    // Co = αs x Fa x Cr + αb x Fb x Cb = 1. x 1. x (0.95, 0.91764706, 0.375) + 1. x 0. x (0.38, 0.78, 0.3) = (0.95, 0.91764706, 0.375)
+    // αo = αs x Fa + αb x Fb = 1. x 1. + 1. x 0. = 1.
+    assert_rgba(
+      fg.color_dodge(&bg),
+      Rgba::from_straight(0.95 / 1., 0.91764706 / 1., 0.375 / 1., 1.0),
+    );
+  }
+
+  #[test]
   fn test_color_burn_opaque_over_opaque() {
     let bg = Rgba::from_straight(1., 0., 0., 1.);
     let fg = Rgba::from_straight(0., 0., 1., 1.);

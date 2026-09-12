@@ -179,7 +179,7 @@ pub(crate) fn color_dodge(cb: f32, cs: f32, a_b: f32, a_s: f32) -> f32 {
   } else if cs == a_s {
     a_s * a_b
   } else {
-    (a_s * a_b).min((a_s * a_s * cb) / (a_s * cs))
+    (a_s * a_b).min((a_s * a_s * cb) / (a_s - cs))
   }
 }
 
