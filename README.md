@@ -15,7 +15,7 @@ You don't need to substitute with dedicated types. Simply implement the `Blend` 
 
 ```toml
 [dependencies]
-msgw3c = "0.1.0"
+msgw3c = "0.2.0"
 ```
 
 Implement the `Blend` trait for any color type you like.
@@ -173,22 +173,27 @@ let backdrops = vec![Rgba { r: 0.1, g: 0.2, b: 0.25, a: 1.0 }, Rgba { r: 0.3, g:
 let sources = vec![Rgba { r: 0.9, g: 0.3, b: 0.1, a: 0.2 }, Rgba { r: 0.45, g: 0.12, b: 0.66, a: 0.8 }, Rgba { r: 0.0, g: 0.0, b: 0.0, a: 0. }];
 let mut target = vec![Rgba::TRANSPARENT; 3];
 
-let batch_blended = batch_normal(&sources, &backdrops, &mut target);
-let custom_operator_blended = batch_multiply_with(&sources, &backdrops, &mut target, PorterDuff::SourceIn);
-let runtime_blend_mode_and_operator_blended = batch_blend_with(&sources, &backdrops, &mut target, BlendMode::Screen, PorterDuff::SourceIn);
+// batch blended
+batch_normal(&sources, &backdrops, &mut target)?;
+// custom operator blended
+batch_multiply_with(&sources, &backdrops, &mut target, PorterDuff::SourceIn)?;
+// runtime blend mode and operator blended
+batch_blend_with(&sources, &backdrops, &mut target, BlendMode::Screen, PorterDuff::SourceIn)?;
 
 
 let sources = vec![Rgba { r: 0.9, g: 0.3, b: 0.1, a: 0.2 }, Rgba { r: 0.45, g: 0.12, b: 0.66, a: 0.8 }, Rgba { r: 0.0, g: 0.0, b: 0.0, a: 0. }];
 
-// in-place version
+// batch blended(in place ver)
 let mut backdrops = vec![Rgba { r: 0.1, g: 0.2, b: 0.25, a: 1.0 }, Rgba { r: 0.3, g: 0.22, b: 0.2, a: 0.8 }, Rgba { r: 0.6, g: 0.8, b: 1.0, a: 0.5 }];
-let batch_blended_in_place = batch_normal_in_place(&sources, &mut backdrops);
+batch_normal_in_place(&sources, &mut backdrops)?;
 
+// custom operator blended(in place ver)
 let mut backdrops = vec![Rgba { r: 0.1, g: 0.2, b: 0.25, a: 1.0 }, Rgba { r: 0.3, g: 0.22, b: 0.2, a: 0.8 }, Rgba { r: 0.6, g: 0.8, b: 1.0, a: 0.5 }];
-let custom_operator_blended = batch_multiply_with_in_place(&sources, &mut backdrops, PorterDuff::SourceIn);
+batch_multiply_with_in_place(&sources, &mut backdrops, PorterDuff::SourceIn)?;
 
+// runtime blend mode and operator blended(in place ver)
 let mut backdrops = vec![Rgba { r: 0.1, g: 0.2, b: 0.25, a: 1.0 }, Rgba { r: 0.3, g: 0.22, b: 0.2, a: 0.8 }, Rgba { r: 0.6, g: 0.8, b: 1.0, a: 0.5 }];
-let runtime_blend_mode_and_operator_blended = batch_blend_with_in_place(&sources, &mut backdrops, BlendMode::Screen, PorterDuff::SourceIn);
+batch_blend_with_in_place(&sources, &mut backdrops, BlendMode::Screen, PorterDuff::SourceIn)?;
 ```
 
 ## Performance
