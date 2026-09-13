@@ -169,31 +169,34 @@ impl Blend for Rgba {
   }
 }
 
-let backdrops = vec![Rgba { r: 0.1, g: 0.2, b: 0.25, a: 1.0 }, Rgba { r: 0.3, g: 0.22, b: 0.2, a: 0.8 }, Rgba { r: 0.6, g: 0.8, b: 1.0, a: 0.5 }];
-let sources = vec![Rgba { r: 0.9, g: 0.3, b: 0.1, a: 0.2 }, Rgba { r: 0.45, g: 0.12, b: 0.66, a: 0.8 }, Rgba { r: 0.0, g: 0.0, b: 0.0, a: 0. }];
-let mut target = vec![Rgba::TRANSPARENT; 3];
+fn main() -> Result<(), msgw3c::error::Error> {
+  let backdrops = vec![Rgba { r: 0.1, g: 0.2, b: 0.25, a: 1.0 }, Rgba { r: 0.3, g: 0.22, b: 0.2, a: 0.8 }, Rgba { r: 0.6, g: 0.8, b: 1.0, a: 0.5 }];
+  let sources = vec![Rgba { r: 0.9, g: 0.3, b: 0.1, a: 0.2 }, Rgba { r: 0.45, g: 0.12, b: 0.66, a: 0.8 }, Rgba { r: 0.0, g: 0.0, b: 0.0, a: 0. }];
+  let mut target = vec![Rgba::TRANSPARENT; 3];
 
-// batch blended
-batch_normal(&sources, &backdrops, &mut target)?;
-// custom operator blended
-batch_multiply_with(&sources, &backdrops, &mut target, PorterDuff::SourceIn)?;
-// runtime blend mode and operator blended
-batch_blend_with(&sources, &backdrops, &mut target, BlendMode::Screen, PorterDuff::SourceIn)?;
-
-
-let sources = vec![Rgba { r: 0.9, g: 0.3, b: 0.1, a: 0.2 }, Rgba { r: 0.45, g: 0.12, b: 0.66, a: 0.8 }, Rgba { r: 0.0, g: 0.0, b: 0.0, a: 0. }];
-
-// batch blended(in place ver)
-let mut backdrops = vec![Rgba { r: 0.1, g: 0.2, b: 0.25, a: 1.0 }, Rgba { r: 0.3, g: 0.22, b: 0.2, a: 0.8 }, Rgba { r: 0.6, g: 0.8, b: 1.0, a: 0.5 }];
-batch_normal_in_place(&sources, &mut backdrops)?;
-
-// custom operator blended(in place ver)
-let mut backdrops = vec![Rgba { r: 0.1, g: 0.2, b: 0.25, a: 1.0 }, Rgba { r: 0.3, g: 0.22, b: 0.2, a: 0.8 }, Rgba { r: 0.6, g: 0.8, b: 1.0, a: 0.5 }];
-batch_multiply_with_in_place(&sources, &mut backdrops, PorterDuff::SourceIn)?;
-
-// runtime blend mode and operator blended(in place ver)
-let mut backdrops = vec![Rgba { r: 0.1, g: 0.2, b: 0.25, a: 1.0 }, Rgba { r: 0.3, g: 0.22, b: 0.2, a: 0.8 }, Rgba { r: 0.6, g: 0.8, b: 1.0, a: 0.5 }];
-batch_blend_with_in_place(&sources, &mut backdrops, BlendMode::Screen, PorterDuff::SourceIn)?;
+  // batch blended
+  batch_normal(&sources, &backdrops, &mut target)?;
+  // custom operator blended
+  batch_multiply_with(&sources, &backdrops, &mut target, PorterDuff::SourceIn)?;
+  // runtime blend mode and operator blended
+  batch_blend_with(&sources, &backdrops, &mut target, BlendMode::Screen, PorterDuff::SourceIn)?;
+  
+  let sources = vec![Rgba { r: 0.9, g: 0.3, b: 0.1, a: 0.2 }, Rgba { r: 0.45, g: 0.12, b: 0.66, a: 0.8 }, Rgba { r: 0.0, g: 0.0, b: 0.0, a: 0. }];
+  
+  // batch blended(in place ver)
+  let mut backdrops = vec![Rgba { r: 0.1, g: 0.2, b: 0.25, a: 1.0 }, Rgba { r: 0.3, g: 0.22, b: 0.2, a: 0.8 }, Rgba { r: 0.6, g: 0.8, b: 1.0, a: 0.5 }];
+  batch_normal_in_place(&sources, &mut backdrops)?;
+  
+  // custom operator blended(in place ver)
+  let mut backdrops = vec![Rgba { r: 0.1, g: 0.2, b: 0.25, a: 1.0 }, Rgba { r: 0.3, g: 0.22, b: 0.2, a: 0.8 }, Rgba { r: 0.6, g: 0.8, b: 1.0, a: 0.5 }];
+  batch_multiply_with_in_place(&sources, &mut backdrops, PorterDuff::SourceIn)?;
+  
+  // runtime blend mode and operator blended(in place ver)
+  let mut backdrops = vec![Rgba { r: 0.1, g: 0.2, b: 0.25, a: 1.0 }, Rgba { r: 0.3, g: 0.22, b: 0.2, a: 0.8 }, Rgba { r: 0.6, g: 0.8, b: 1.0, a: 0.5 }];
+  batch_blend_with_in_place(&sources, &mut backdrops, BlendMode::Screen, PorterDuff::SourceIn)?;
+  
+  Ok(())
+}
 ```
 
 ## Performance
